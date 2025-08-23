@@ -1,0 +1,78 @@
+\begin{thebibliography}{14}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Berger(2013)]{berger2013statistical}
+J.~O. Berger.
+\newblock \emph{Statistical decision theory and Bayesian analysis}.
+\newblock Springer Science \& Business Media, 2013.
+
+\bibitem[Casella and Berger(2024)]{casella2024statistical}
+G.~Casella and R.~Berger.
+\newblock \emph{Statistical inference}.
+\newblock Chapman and Hall/CRC, 2024.
+
+\bibitem[Cover and Thomas(2006)]{cover2006elements}
+T.~M. Cover and J.~Thomas.
+\newblock \emph{Elements of information theory}.
+\newblock John Wiley \& Sons, 2006.
+
+\bibitem[Csisz{\'a}r and K{\"o}rner(2011)]{csiszar2011information}
+I.~Csisz{\'a}r and J.~K{\"o}rner.
+\newblock \emph{Information theory: coding theorems for discrete memoryless systems}.
+\newblock Cambridge University Press, 2011.
+
+\bibitem[Gallager(2002)]{gallager2002claude}
+R.~G. Gallager.
+\newblock {Claude E. Shannon: A retrospective on his life, work, and impact}.
+\newblock \emph{IEEE Transactions on Information Theory}, 47\penalty0 (7):\penalty0 2681--2695, 2002.
+
+\bibitem[Lehmann and Casella(1998)]{lehmann1998theory}
+E.~L. Lehmann and G.~Casella.
+\newblock \emph{Theory of point estimation}.
+\newblock Springer, 1998.
+
+\bibitem[Lehmann and Romano(2005)]{lehmann2005testing}
+E.~L. Lehmann and J.~P. Romano.
+\newblock \emph{Testing statistical hypotheses}.
+\newblock Springer, 2005.
+
+\bibitem[Polyanskiy and Wu(2025)]{polyanskiy2025information}
+Y.~Polyanskiy and Y.~Wu.
+\newblock \emph{Information theory: From coding to learning}.
+\newblock Cambridge university press, 2025.
+
+\bibitem[Rao(1992)]{rao1992ra}
+C.~R. Rao.
+\newblock {RA Fisher: The founder of modern statistics}.
+\newblock \emph{Statistical science}, pages 34--48, 1992.
+
+\bibitem[Shannon(1948)]{shannon1948mathematical}
+C.~E. Shannon.
+\newblock A mathematical theory of communication.
+\newblock \emph{The Bell system technical journal}, 27\penalty0 (3):\penalty0 379--423, 1948.
+
+\bibitem[Tsybakov(2009)]{tsybakov2009nonparametric}
+A.~B. Tsybakov.
+\newblock \emph{Introduction to Nonparametric Estimation}.
+\newblock Springer, 2009.
+
+\bibitem[Van~der Vaart(2000)]{van2000asymptotic}
+A.~W. Van~der Vaart.
+\newblock \emph{Asymptotic statistics}, volume~3.
+\newblock Cambridge university press, 2000.
+
+\bibitem[Verdu(1998)]{verdu1998fifty}
+S.~Verdu.
+\newblock {Fifty years of Shannon theory}.
+\newblock \emph{IEEE Transactions on information theory}, 44\penalty0 (6):\penalty0 2057--2078, 1998.
+
+\bibitem[Wald(1945)]{wald1945sequential}
+A.~Wald.
+\newblock Sequential method of sampling for deciding between two courses of action.
+\newblock \emph{Journal of the American Statistical Association}, 40\penalty0 (231):\penalty0 277--306, 1945.
+
+\end{thebibliography}
