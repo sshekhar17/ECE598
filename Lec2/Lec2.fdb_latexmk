@@ -1,19 +1,19 @@
 # Fdb version 4
-["bibtex Lec2"] 1755984605.80298 "Lec2.aux" "Lec2.bbl" "Lec2" 1755984605.96538 0
-  "../ref.bib" 1755983350.30558 7116 7a570a7be543e21e0c1b525889236709 ""
+["bibtex Lec2"] 1755984915.6019 "Lec2.aux" "Lec2.bbl" "Lec2" 1755984917.3127 0
+  "../ref.bib" 1755984915.35191 7118 50f80be2e671c888a8bc5ac25c4ff4d9 ""
   "/usr/local/texlive/2024/texmf-dist/bibtex/bst/natbib/abbrvnat.bst" 1233624470 26532 66bed5cc59495faaa3f9ae9af9fa5e42 ""
-  "Lec2.aux" 1755978675.64117 3901 9aecd9412ee2889b4dba0117c26ce2ca "pdflatex"
+  "Lec2.aux" 1755984917.05907 3901 9aecd9412ee2889b4dba0117c26ce2ca "pdflatex"
   (generated)
   "Lec2.bbl"
   "Lec2.blg"
   (rewritten before read)
-["pdflatex"] 1755978674.29747 "/Users/sshekhar/Documents/Teaching/ECE598/Lec2/Lec2.tex" "Lec2.pdf" "Lec2" 1755984605.96545 0
-  "../Figures/binary-KL.tex" 1755724009.44071 626 3c62b49991a1f3bcd2ee6b2f88c1f06e ""
-  "../Figures/binary-entropy.tex" 1755723857.10667 575 b0b01fcd8d48b2badf7b9c9971f9a89f ""
-  "../newMacros.tex" 1748455677.68712 2736 5ad65abb6e8a3cef0d2496fec55b9fd5 ""
-  "../preamble.tex" 1755116191.19747 6985 290e2428077cd3414b671326e4fc64e4 ""
-  "../scribe.sty" 1755389808.0778 11938 8dee6a56f2358178393e7dec54c9ae87 ""
-  "/Users/sshekhar/Documents/Teaching/ECE598/Lec2/Lec2.tex" 1755984605.5862 24124 a8c131d1a926108163d1d21ea751b1db ""
+["pdflatex"] 1755984915.68996 "/Users/sshekhar/Documents/Teaching/ECE598_Public/Lec2/Lec2.tex" "Lec2.pdf" "Lec2" 1755984917.3128 0
+  "../Figures/binary-KL.tex" 1755983912.26871 626 3c62b49991a1f3bcd2ee6b2f88c1f06e ""
+  "../Figures/binary-entropy.tex" 1755983912.26546 575 b0b01fcd8d48b2badf7b9c9971f9a89f ""
+  "../newMacros.tex" 1755983957.87363 2736 5ad65abb6e8a3cef0d2496fec55b9fd5 ""
+  "../preamble.tex" 1755983957.87191 6985 290e2428077cd3414b671326e4fc64e4 ""
+  "../scribe.sty" 1755983957.8746 11938 8dee6a56f2358178393e7dec54c9ae87 ""
+  "/Users/sshekhar/Documents/Teaching/ECE598_Public/Lec2/Lec2.tex" 1755984700.23901 24124 a8c131d1a926108163d1d21ea751b1db ""
   "/usr/local/texlive/2024/texmf-dist/fonts/enc/dvips/base/8r.enc" 1165713224 4850 80dc9bab7f31fb78a000ccfed0e27cab ""
   "/usr/local/texlive/2024/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/local/texlive/2024/texmf-dist/fonts/tfm/adobe/times/ptmb8r.tfm" 1136768653 4524 6bce29db5bc272ba5f332261583fee9c ""
@@ -318,10 +318,10 @@
   "/usr/local/texlive/2024/texmf-var/fonts/map/pdftex/updmap/pdftex.map" 1724688926.38915 5467645 128b85b7cde5f5edc5cb7f1dd7ff8736 ""
   "/usr/local/texlive/2024/texmf-var/web2c/pdftex/pdflatex.fmt" 1724688885 8221424 e0a8631d53404c281525d8d15130b1b1 ""
   "/usr/local/texlive/2024/texmf.cnf" 1710266656 577 e590dabc9e28c5b61546e15f63eebcdf ""
-  "Lec2.aux" 1755978675.64117 3901 9aecd9412ee2889b4dba0117c26ce2ca "pdflatex"
-  "Lec2.bbl" 1755984605.95005 691 6b30c555680faad0ee1e67b6ef731203 "bibtex Lec2"
-  "Lec2.out" 1755978675.64174 1418 8df5ea323a442f567abb7f3ebc46e3d6 "pdflatex"
-  "Lec2.tex" 1755984605.5862 24124 a8c131d1a926108163d1d21ea751b1db ""
+  "Lec2.aux" 1755984917.05907 3901 9aecd9412ee2889b4dba0117c26ce2ca "pdflatex"
+  "Lec2.bbl" 1755984915.67732 693 e60f89e6717710aff1700e461063af1d "bibtex Lec2"
+  "Lec2.out" 1755984917.05965 1418 8df5ea323a442f567abb7f3ebc46e3d6 "pdflatex"
+  "Lec2.tex" 1755984700.23901 24124 a8c131d1a926108163d1d21ea751b1db ""
   (generated)
   "Lec2.aux"
   "Lec2.log"

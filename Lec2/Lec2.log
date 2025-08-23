@@ -1,10 +1,10 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.8.26)  23 AUG 2025 15:51
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.8.26)  23 AUG 2025 17:35
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
  %&-line parsing enabled.
-**/Users/sshekhar/Documents/Teaching/ECE598/Lec2/Lec2.tex
-(/Users/sshekhar/Documents/Teaching/ECE598/Lec2/Lec2.tex
+**/Users/sshekhar/Documents/Teaching/ECE598_Public/Lec2/Lec2.tex
+(/Users/sshekhar/Documents/Teaching/ECE598_Public/Lec2/Lec2.tex
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-02-20>
 (/usr/local/texlive/2024/texmf-dist/tex/latex/base/article.cls
@@ -1392,14 +1392,14 @@ Package rerunfilecheck Info: File `Lec2.out' has not changed.
  ) 
 Here is how much of TeX's memory you used:
  43639 strings out of 474116
- 1006040 string characters out of 5743682
+ 1006061 string characters out of 5743682
  1957187 words of memory out of 5000000
  65196 multiletter control sequences out of 15000+600000
  596686 words of font info for 96 fonts, out of 8000000 for 9000
  1142 hyphenation exceptions out of 8191
- 108i,21n,113p,1009b,2232s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 108i,21n,113p,1016b,2232s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi12.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi6.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr6.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy6.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
-Output written on Lec2.pdf (9 pages, 210361 bytes).
+Output written on Lec2.pdf (9 pages, 210362 bytes).
 PDF statistics:
  232 PDF objects out of 1000 (max. 8388607)
  167 compressed objects within 2 object streams
