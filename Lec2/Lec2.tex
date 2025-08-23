@@ -1,0 +1,340 @@
+\documentclass[12pt]{article}
+\usepackage[english]{babel}
+\usepackage[utf8x]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{../scribe}
+\usepackage{listings}
+
+\usepackage{hyperref}
+% \usepackage{cleveref}
+\usepackage{xcolor}
+\usepackage{natbib}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18} % or the latest version you have
+\usepackage{tikz}
+\renewcommand{\arraystretch}{1.5}
+\usepackage{nicefrac}
+% \newcommand{\thetahat}{\widehat{\theta}}
+% \Scribe{Shubhanshu Shekhar}
+\Lecturer{Shubhanshu Shekhar}
+\LectureNumber{2}
+\LectureDate{August 28, 2025}
+\LectureTitle{Information Measures}
+
+\lstset{style=mystyle}
+% \usepackage{tikz}
+\usepackage{comment}
+% \usepackage{pgfplots}
+% \usepackage{enumitem}
+\input{../preamble}
+\input{../newMacros}
+
+
+\begin{document}
+	\MakeScribeTop
+%#############################################################
+%#############################################################
+%#############################################################
+%#############################################################
+
+We begin this lecture by stating the defintions of the three key information measures for discrete distributions, and discuss how they can be extended to more general distributions. Next, we establish some elementary properties of these information measures, and apply those ideas to study the problem of generating random bits. 
+
+
+\section{Information Measures} 
+
+For simplicity, let us assume that $\calX$ and $\calY$ denote discrete alphabets that are either finite or countable (places where finiteness is important will be explicitly mentioned). For random variables $X$ and $Y$ taking values in the alphabets $\calX$ and $\calY$ respectively, we  use $P_X$ and $P_Y$ to denote their probability distributions; that is, $P_X: 2^{\calX} \to [0,1]$ and $P_Y:2^{\calY} \to [0,1]$ map subsets of $\calX$ and $\calY$ to the unit interval. Furthermore, we use $p_X:\calX \to [0,1], p_Y:\calY \to [0,1]$ to denote their probability mass functions, with the property 
+\begin{align}
+P_X(E) = \sum_{x \in E} p_X(x), \qtext{and} P_Y(F) = \sum_{y \in F} p_Y(y), 
+\end{align}
+for $E \subset \calX$ and $F \subset \calY$. Similarly, we can define joint distributions $P_{XY}$~(with pmf $p_{XY}$) and conditional distributions $P_{Y|X}$~(with pmf $p_{Y|X}$). 
+We now introduce the definition of the first important information measure, entropy. 
+\begin{definition}[Entropy]
+\label{def:entropy-discrete} Suppose $X \sim P_X$ is an $\calX$-valued discrete random variable with pmf $p_X$. Then, the entropy of $X$~(equivalently entropy of the distribution $P_X$, or pmf $p_X$) is defined as 
+\begin{align}
+H(X) \equiv H(P_X) \equiv H(p_X) = \sum_{x \in \calX} p_X(x) \log 1/p_X(x) = \mathbb{E}_{X \sim P_X}\lb \log \lp \frac{1}{p_X(X)} \rp \rb. 
+\end{align}
+
+For a pair of random variables $(X, Y)$ with a joint distribution $P_{XY}$, we can define the joint entropy $H(X, Y) \equiv H(P_{XY})$ and conditional entropy $H(Y|X) \equiv H(P_{Y|X}|P_X)$ as 
+\begin{align}
+H(X, Y) &= \sum_{x, y\in \calX \times \calY} p_{XY}(x, y) \log 1/p_{XY}(x,y) = \mathbb{E}_{(X, Y) \sim P_{XY}} \lb \log(1/p_{XY}(X, Y)) \rb,  \quad \text{and}\\ 
+  H(Y|X) &= \sum_{x \in \calX} p_X(x) \sum_{y \in \calY} p_{Y|X}(y|x) \log (1/p_{Y|X}(y|x)) =  \mathbb{E}_{X \sim P_X} \mathbb{E}_{Y|X \sim P_{Y|X}} \lb \log(1/P_{Y|X}(Y|X)) \rb. 
+\end{align}
+\end{definition}
+Since each $p_X(x) \in [0,1]$, it follows that $\log(1/p_X(x)) \geq 0$ for all $x \in \calX$, which implies that the entropy of $P_X$ is always nonnegative.\\
+\blue{\emph{Exercise:}} Suppose $X \sim P_X$ and $f:\calX \to \{1, \ldots, |\calX|\}$ be a one-to-one map. Then, what is the relation between $H(X)$ and $H(f(X))$. 
+
+\begin{example}
+\label{example:binary-entropy} Consider the simplest case of $\calX = \{0,1\}$ and $X \sim \Bernoulli(p)$. Then, the entropy of $X$, often referred to as the binary entropy and denoted by $h_b(p)$, is equal to 
+\begin{align}
+	H(X) \equiv h_b(p) = -p \log p - \bar{p} \log \bar{p}, \qtext{where} \bar{p} = 1-p. 
+\end{align}
+The variation of $h_b(p)$ with $p$ is shown in the left plot in~Figure~\ref{fig:binary-entropy-kl}. Notice that qualitatively $h(p)$ looks similar to the variance $p(1-p)$, which is another common measure of uncertainty. 
+\end{example}
+
+\begin{figure}[hbt!]
+\centering
+	% \def\figwidth{0.5\columnwidth}
+	\def\figheight{0.25\columnwidth} % Feel free to change
+	\input{../Figures/binary-entropy.tex}
+	\input{../Figures/binary-KL.tex}
+	\caption{Binary entropy $h_b(p)$ on the left, and $\dkl(p\parallel 1/2)$ and $\dkl(1/2 \parallel p)$ on the right.}
+	\label{fig:binary-entropy-kl}
+\end{figure}
+
+
+We now present the definition of the next term, called relative entropy or KL-divergence, that is a notion of distance between two distributions. 
+
+\begin{definition}[Relative Entropy]
+\label{def:relative-entropy-discrete} Suppose $X$ and $X'$ are two $\calX$-valued random variables with distributions $P$ and $Q$, with pmfs $p$ and $q$ respectively. Then, the relative entropy $\dkl:\calP(\calX) \times \calP(\calX) \to \mathbb{R}$ between $P$ and $Q$ is defined as 
+\begin{align}
+\dkl(P \parallel Q) = \sum_{x\in \calX} p(x) \log \lp \frac{p(x)}{q(x)} \rp. 
+\end{align}
+This definition extends naturally to joint distributions $P_{XY}$ and $Q_{XY}$ both on $\calX \times \calY$ as 
+\begin{align}
+	\dkl(P_{XY} \parallel Q_{XY}) = \sum_{x, y } p_{XY}(x, y) \log \lp \frac{p_{XY}(x,y)}{q_{XY}(x,y)} \rp = \mathbb{E}_{P_{XY}}\lb \log \lp \frac{p_{XY}(X, Y)}{q_{XY}(X,Y)} \rp \rb, 
+\end{align}
+and to the case of conditional distributions 
+\begin{align}
+\dkl(P_{Y|X} \parallel Q_{Y|X} \mid \blue{P_X}) &= \sum_{x \in \calX} \blue{p_X(x)} \sum_{y \in \calY} p_{Y|X}(y|x) \log \lp \frac{p_{Y|X}(y|x)}{q_{Y|X}(y|x)} \rp  \\
+& = \mathbb{E}_{\blue{P_X}}\lb \mathbb{E}_{P_{Y|X}} \lb \log \lp \frac{p_{Y|X}(Y|X)}{q_{Y|X}(Y|X)} \rp \rb \rb. 
+\end{align}
+The conditional relative entropy between $P_{Y|X}$ and $Q_{Y|X}$ averaged according to the marginal $P_X$ can be understood as follows for the case of finite $\calX, \calY$: We calculate the relative entropy between $P_{Y|X=x}$ and $Q_{Y|X=x}$ which are the rows of the transition probability matrices $P_{Y|X}$ and $Q_{Y|X}$ corresponding to $X=x$, and then we average these for all $x$ according to the marginal $P_X$. 
+\end{definition}
+
+\begin{example}
+\label{example:binary-kl} Consider $P=\Bernoulli(p)$ and $Q = \Bernoulli(0.5)$. Then, we have 
+\begin{align}
+	\dkl(P \parallel Q) = d_{KL}(p \parallel 0.5) = p \log (2 p) + \bar{p}\log(2 \bar{p}). 
+\end{align}
+The variation of the binary relative entropy with $p$ is shown in the right plot on~Figure~\ref{fig:binary-entropy-kl}. The figure indicates that $d_{KL}(p\parallel 0.5)$ appears like a quadratic function, and in fact we can show that $d_{KL}(p\parallel 0.5) = \calO(|p-0.5|^2)$.
+\end{example}
+
+The final information measure we introduce is the mutual information, which can be defined in terms of the either the relative entropy or the entropy. 
+\begin{definition}[Mutual Information]
+\label{def:mutual-information-discrete} The mutual information $I:\calP(\calX \times \calY) \to \mathbb{R}$ between two random variables $X$ and $Y$ with joint distribution $P_{XY}$ is defined as 
+\begin{align}
+I(X; Y) \equiv I(P_{XY}) = \sum_{x, y \in \calX \times \calY} p_{XY}(x, y) \log \lp \frac{p_{XY}(x,y)}{p_X(x) p_Y(y)} \rp. 
+\end{align}
+It immediately follows that the above definition is equivalent to 
+\begin{align}
+I(X; Y) = I(P_{XY}) = \dkl( P_{XY} \parallel P_X \times P_Y), 
+\end{align}
+where $P_X \times P_Y$ denotes the product of the marginals. 
+\end{definition}
+We will see later on that mutual information can also be written in terms of entropy as follows: 
+\begin{align}
+I(X;Y) = H(X) + H(Y) - H(X, Y) = H(X) - H(X|Y) = H(Y) - H(Y|X). 
+\end{align}
+The last two definitions provide some intuitive understanding of information as the reduction of uncertainty: if $H(Y)$ is the total uncertainty about $Y$ and $H(Y|X)$ is the uncertainty remaining about $Y$ given the knowledge of $X$, then $I(X;Y)$ is the reduction in uncertainty about $Y$ that is achieved by knowing $X$. 
+
+
+\subsection{Extension to general alphabets}
+\label{subsec:extention-to-general-alphabet}
+
+While we have only introduced the information measures  for the case of discrete distributions, we now show that for the case of relative entropy (and hence mutual information), this restriction to finite alphabets is essentially without loss of generality. In particular, suppose $\calX$ denotes some general alphabet, and $\calB$ is a \href{https://en.wikipedia.org/wiki/%CE%A3-algebra}{sigma-field or sigma-algebra} of subsets of $\calX$. Let $\calE$ denote the collection of all finite partitions on $\calX$ constructed using sets in $\calB$. Let $\pi = (E_1, \ldots, E_m)$ denote one such partition of $\calX$, and for any two probability measures $P,Q$ on $(\calX, \calB)$, denote the restriction of $P, Q$ to $\pi$ with $P_\pi$ and $Q_\pi$. That is, $P_\pi$ is a discrete distribution over an alphabet of size $m$, with pmf $p_\pi \equiv (P(E_1), \ldots, P(E_m))$. With these notations, we can now state the following result.  
+\begin{definition}
+\label{def:relative-entropy-general}
+Let $(\calX, \calB)$ denote a general measurable space, and let $P:\calB \to [0,1]$ and $Q:\calB \to [0,1]$ denote two probability measures defined on this measurable space. Then, the relative entropy between $P$ and $Q$ is defined as 
+\begin{align}
+\dkl(P\parallel Q) \defined \sup_{\pi \in \calE} \dkl(P_\pi \parallel Q_\pi) = \sup_{\pi \in \calE} \sum_{E \in \pi} P(E) \log \lp \frac{P(E)}{Q(E)} \rp. 
+\end{align}
+\end{definition}
+
+Since mutual information between $X$ and $Y$ is also defined as the relative entropy between the joint distribution $P_{XY}$ and the product of its marginals, $P_X \times P_Y$, the above definition also immediately gives us an analogous variational definition of mutual information. \begin{definition}
+\label{def:mutual-information-general}   Suppose $(\calX, \calB_X)$ and $(\calY, \calB_Y)$ denote two measurable spaces, and let $(X, Y) \sim P_{XY}$ be a joint distribution on the product space $(\calX \times \calY, \calB_X \times \calB_Y)$. Then, the mutual information between $(X, Y)$ is equal to 
+\begin{align}
+I(X;Y) \equiv I(P_{XY}) = \sup_{\pi \in \calE_{XY}} \sum_{E \in \pi} P_{XY}(E) \log \lp \frac{P_{XY}(E)}{ (P_X \otimes P_Y)(E)}\rp. 
+\end{align}
+where $\calE_{XY}$ is the collection of all finite measurable partition of the product space $\calX \times \calY$. Since the product sigma-algebra is generated by the ``rectangular sets'', in fact, we can show that we can restrict our attention to such rectangular partitions: 
+\begin{align}
+I(X; Y) = \sup_{\pi_X \in \calE_X, \pi_Y \in  \calE_Y} \sum_{E_x \in \pi_X} \sum_{E_y \in \pi_Y} P_{XY}(E_X \times E_Y) \log \lp \frac{P_{XY}(E_X \times E_Y)}{P_X(E_X) P_Y(E_Y)} \rp. 
+\end{align}
+\end{definition}
+Thus, the key takeaway from these definitions is that our definitions of $\dkl$ and $I$ for discrete distributions is essentially without loss of generality. Everything we prove for discrete distributions can be extended, with some careful limiting arguments, to the case of most general distributions. 
+
+The case of entropy is a bit more nuanced. Suppose we define the following for an $\calX$ valued random variable $X$: 
+\begin{align}
+H'(X) \defined \sup_{\pi \in \calE} H(X_\pi) = \sup_{\pi \in \calE}   \sum_{E\in \pi}-P_X(E) \log \lp P_X(E) \rp. 
+\end{align}
+It can be verified that the above definition of $H'$ is finite only when the random variable $X$ is discrete (with possibly countable support). \blue{[for example, try this out on $\mathrm{Uniform}[0,1]$.]}  A simple alternative might be to define the so-called \emph{differential entropy} 
+\begin{align}
+h(X) = \int -\log(p_X) p_X d\mu, 
+\end{align}
+where $p_X$ denotes the density of $P_X$ with respect to some reference measure $\mu$. However, this approach has some drawbacks: (i) $h(X)$ can be negative, (ii) the value of $h(X)$ is dependent on the reference measure $\mu$, (iii) $h(X)$ loses some operational meanings (as the fundamental limit of compression) that the usual discrete entropy $H(X)$ possesses. 
+
+\begin{remark}
+\label{remark:general-entropy} An alternative approach to defining entropy for general distributions is through the notion of \emph{information dimension} as introduced by~\citet{renyi1959dimension}. Informally, the idea is to define the information dimension 
+\begin{align}
+d_{\text{info}} = \lim_{\delta \downarrow 0} \frac{H(X_\delta)}{\log(1/\delta)}, 
+\end{align}
+where $X_\delta$ is the discretization of the random variable $X$ over a partition of $\calX$ whose ``granularity'' is $\delta$~(i.e., we require the space $\calX$ to be a metric space, and then require the diameter of sets in the partition to be no larger than $2\delta$). Then, it turns out that an appropriate notion of entropy is 
+\begin{align}
+h(X) = \lim_{\delta \to 0} \lb H(X_\delta) - d_{\text{info}} \log(1/\delta) \rb, 
+\end{align}
+assuming this limit exists. \\
+\blue{\emph{Exercise:}} What is $d_{\text{info}}$ if $X$ is a discrete distribution? What if $X$ is $\uniform([0,1])$? 
+\end{remark}
+
+\section{Properties of Information Measures}
+\label{sec:properties-of-information-measures}
+In this section, we state and prove certain elementary proprties of the information measures. Like most inequalities, these results can essentially be traced back to the concavity of the map $x \mapsto x \log x$ or concavity of $x \mapsto \log x$. 
+
+We begin with the fundamental result, often referred to as Gibbs' inequality. 
+\begin{theorem}[Gibbs Inequality]
+\label{theorem:gibbs} Suppose $P$ and $Q$ are two distributions over a common finite alphabet $\calX$. Then, we have 
+\begin{align}
+\dkl(P \parallel Q) \geq 0, 
+\end{align}
+with equality if and only if $P=Q$. 
+\end{theorem}
+
+\begin{proof}
+Recall that the function $f(x) = x \log x$ is convex, and thus we have 
+\begin{align}
+\dkl(P\parallel Q) = \mathbb{E}_{Q}\lb f\lp \frac{P(X)}{Q(X)} \rp \rb \stackrel{(i)}{\geq} f\lp \mathbb{E}_Q\lb \frac{P(X)}{Q(X)} \rb \rp = f(1) = 0, 
+\end{align}
+where $(i)$ follows due to Jensen's inequality and the convexity of $f$. For this inequality to hold with equality, we require $P(X)/Q(X)=1$ for all $x \in \calX$, which happens if and only if $P=Q$. 
+\end{proof}
+
+\subsection{Nonnegativity of Information Measures}
+This simple inequality leads to several important consequences, some of which we list below: 
+\begin{itemize}
+\item  \emph{Nonnegativity of mutual information.} Since $I(X; Y) = \dkl(P_{YX} \parallel P_X \times P_Y)$, it immediately follows that the mutual information between two random variables is also always non-negative. Furthermore, $I(X;Y)=0$ if and only if $P_{XY} = P_X \times P_Y$ or $X \perp Y$. Thus, mutual information is a notion of correlation between $X$ and $Y$.
+
+\item \emph{Conditioning reduces entropy.} Since $I(X;Y) = H(X) - H(X|Y) \geq 0$, we have $H(X|Y) \leq H(X)$. Similary, we have $H(Y|X) \leq H(Y)$. In both cases, we have equality only if $X \perp Y$. 
+\end{itemize}
+
+
+\subsection{Chain Rules}
+The next important result is about chain rules. 
+\begin{theorem}[Chain Rules]
+\label{theorem:chain-rules}
+Let $X_1, X_2, \ldots, X_n$ denote a collection of random variblables taking values in $\calX_1, \calX_2, \ldots, \calX_n$ respectively. Consider two possible joint distributions of $X^n$, denoted by $P_{X^n}$ and $Q_{X^n}$. Then, we have the following: 
+\begin{align}
+\dkl(P_{X^n} \parallel Q_{X^n}) = \sum_{i=1}^n \dkl\lp P_{X_i|X^{i-1}} \parallel Q_{X_i|X^{i-1}} \mid P_{X^{i-1}} \rp. 
+\end{align}
+Similarly, for the case of mutual information and entropy, we have 
+\begin{align}
+I(X^n; Y) = \sum_{i=1}^n I(X_i; Y \mid X^{i-1}),  \qtext{and} H(X^n) = \sum_{i=1}^n H(X_i|X^{i-1}) \leq \sum_{i=1}^n H(X_i).
+\end{align}
+\end{theorem}
+These statements can be proved by simply factoring out the joint pmfs involved in the definitions into appropriate products of the conditional pmfs. We write the explicit steps for the case of entropy with $n=2$, but the same idea works for the other two measures as well and general $n$: 
+\begin{align}
+H(X_1, X_2) &= \sum_{x_1, x_2} -p_{X_1, X_2}(x_1, x_2) \log p_{X_1, X_2}(x_1, x_2)  \\
+&= \sum_{x_1, x_2} -p_{X_1, X_2}(x_1, x_2) \lp \log p_{X_1}(x_1) + \log p_{X_2|X_1}(x_2|x_1) \rp  \\
+& = -\sum_{x_1} p_{X_1}(x_1)\log p_{X_1}(x_1) - \sum_{x_1} p_{X_1}(x_1) \sum_{x_2} p_{X_2|X_1}(x_2|x_1) \log p_{X_2|X_1}(x_2|x_1) \\
+& = H(X_1) + \sum_{x_1} p_{X_1}(x_1) H(X_2|X_1=x_1) = H(X_1) + H(X_2|X_1). 
+\end{align}
+This extends to the general $n \geq 2$ case directly by induction. Similar arguments work for relative entropy and mutual information~(start with $n=2$, and use induction). 
+
+\subsection{Data Processing Inequalities}
+To state the next result, we need to introduce the notion of a channel. In the simplest case of discrete and finite alphabets $\calX$ and $\calY$, a channel $K_{Y|X}$ is simply a transition probability matrix. For every input symbol $x \in \calX$, the channel outputs $Y \sim K_{Y|X=x}$. 
+
+\begin{theorem}[Data Processing Inequality]
+\label{theorem:DPI}  Let $K_{Y|X}$ denote a channel over alphabets $\calX$~(input alphabet) and $\calY$~(ouptut alphabet). Let $P_X, Q_X$ denote two input distributions, and let $P_Y = P_X K_{Y|X} $ and $Q_Y = Q_X K_{Y|X}$ denote the output distribution after passing $P_X$ and $Q_X$ through the same channel $K_{Y|X}$. Then, the data processing inequality says that 
+\begin{align}
+\dkl(P_Y \parallel Q_Y) \leq \dkl(P_X\parallel Q_X). 
+\end{align}
+In other words, the ``distance'' between two distributions cannot be increased by passing them through a common channel~(or stochastic kernel). 
+\end{theorem}
+The fundamental idea behind this statement can be summarized as: \begin{quote}
+	The output likelihood ratio at any $y$ is a convex combination of the input likelihood ratios. Apply Jensen's.
+\end{quote}
+
+\begin{proof}
+To simplify the notation, we will write $K$ instead of $K_{Y|X}$. Then, observe that $P_Y(y) = (P_X K)(y) = \sum_{x \in \calX} P_X(x) K_{Y|X}(y|x)$ and $Q_Y(y) = (Q_X K)(y) = \sum_{x \in \calX} Q_X(x) K_{Y|X}(y|x)$. Then, we have 
+\begin{align}
+\dkl(P_Y \parallel Q_Y) &= \sum_{y\in \calY} P_Y(y) \log \lp \frac{P_Y(y)}{Q_Y(y)} \rp = \sum_{y\in \calY} Q_Y(y)  \frac{P_X K(y)}{Q_X K(y)}\log \lp \frac{P_X K(y)}{Q_XK(y)} \rp. 
+\end{align}
+Let us introduce the notation $\ell_x = P_X(x)/Q_X(x)$ and  $w_x(y)= Q_X(x) K(y|x)/Q_Y(y)$, and observe that 
+\begin{align}
+\sum_{x \in \calX} w_x(y) = \frac{\sum_{x \in \calX} Q_X(x) K(y|x) }{Q_Y(y)} = 1,  \qtext{and} 
+\sum_{x \in \calX} w_x(y) \ell_x = \frac{P_X K(y)}{Q_X K(y)}. 
+\end{align}
+Hence by the convexity of $f(u) =  u \log u$, we have 
+\begin{align}
+\dkl(P_Y \parallel Q_Y) &= \sum_{y} Q_Y(y) f\lp \frac{P_X K(y)}{Q_X K(y)} \rp = \sum_y Q_Y(y) f \lp \sum_{x \in \calX} w_x(y) \ell_x \rp \\
+& \stackrel{(i)}{\leq} \sum_{y} Q_Y(y) \sum_{x \in \calX} w_x(y) f\lp  \ell_x\rp  = \sum_{y, x} Q_X(x) K(y|x) \frac{P_X(x)}{Q_X(x)} \log \lp \frac{P_X(x)}{Q_X(x)} \rp \\
+& = \sum_{x \in \calX} P_X(x) \log \lp \frac{P_X(x)}{Q_X(x)} \rp \sum_{y} K(y|x) 
+=\dkl(P_X \parallel Q_X), 
+\end{align}
+where $(i)$ follows from an application of Jensen's inequality. 
+\end{proof}
+
+This general result can be used to derive analogous DPI for mutual information and entropy. In particular, suppose $U \longrightarrow V \longrightarrow W$ form a Markov chain~(that is, $U \perp W \mid V$). Then~Theorem~\ref{theorem:DPI} can be used to show the following. 
+\begin{corollary}
+\label{corollary:DPI} If $U \longrightarrow V \longrightarrow W$, then we have 
+$I(U; W) \leq I(U; V)$,  which implies $H(U|W) \leq H(U|V)$. 
+\end{corollary} 
+\begin{proof}
+Due to the Markov property, we have 
+\begin{align}
+P_{UW} = P_{UV} K_{W|V}, \qtext{and} P_U P_W = (P_U P_V) K_{W|V}. 
+\end{align}
+Hence, by applying the DPI for relative entropy, we have 
+\begin{align}
+I(U;W) &= \dkl(P_{UW} \parallel P_U P_W) = \dkl(P_{UV} K_{W|V} \parallel (P_U P_V) K_{W|V})  \\ 
+&\leq \dkl(P_{UV} \parallel P_U P_V)= I(U; V). 
+\end{align}
+Replacing $I(U;W) = H(U) - H(U|W)$ and $I(U;V) = H(U) - H(U|V)$, we get the require result for entropy. 
+\end{proof}
+\section{Application: Extracting Purely Random Bits}
+
+Consider the following setting: Let $X^n = (X_1, \ldots, X_n)$ denote $n$ \iid draws from a $\Bernoulli(p)$ distribution, with unknown $p \in (0, 1)$. Our goal is to extract $L$ purely random bits from $X^n$; that is, we want to construct a procedure 
+$K$ such that $K(X^n) = (L, Z^L)$, where $L \in \{0, \ldots, n\}$ and $z^l \in \{0, 1\}^l$ for each $l \in \{0, \ldots, n\}$, satisfying the property 
+\begin{align}
+\mathbb{P}\lp L=l, Z^L = z^l \rp = \mathbb{P}(L=l) 2^{-l},  \qtext{for all} z^l \in \{0,1\}^l, \; l \in \{0, \ldots, n\}.  \label{eq:fair-coin-toss}
+\end{align}
+In other words, conditioned on $L=l$, the random variable $Z^l$ is uniformly distributed over $\{0,1\}^l$.  This problem is often stated in the following way: \emph{Suppose we have a coin with unknown probability of heads $p$. How many fair coin tosses can we simulate using $n$ tosses of this possibly biased coin?}
+
+\paragraph{The information theoretic limit.} We first establish a fundamental, algorithm-agnostic, limit on the expected number of fair coin tosses that can be extracted from the biased coin. Let $K$ denote any extraction procedure satisfying~\eqref{eq:fair-coin-toss}. Then, we have the following chain: 
+\begin{align}
+n h_b(p) &= n H(X_1) = H(X^n) = H(X^n) + H(K(X^n)|X^n)  \\
+& = H(X^n, K(X^n)) = H(K(X^n)) + H(X^n|K(X^n)) && (\text{chain rule}) \\
+& \geq H(K(X^n)) = H(L, Z^L) && (\text{since } H(X^n|K(X^n)) \geq 0) \\
+& =  H(L) + H(Z^L|L) && (\text{chain rule}) \\
+& \geq H(Z^L|L) = \sum_{l=0}^{n} \mathbb{P}(L=l) H(Z^l|L=l) && (\text{since } H(L) \geq 0) \\
+& = \sum_{l=0}^{n} \mathbb{P}(L=l) l = \mathbb{E}[L]. && (Z^L|L=l \text{ is uniform}) 
+\end{align}
+Thus, we have proved that any feasible extractor must satisfy 
+\begin{align}
+\frac{\text{expected \# of fair coin tosses}}{\text{\# number of biased coin tosses}} = \frac{\mathbb{E}[L]}{n}  \leq h(p)= -p \log p - \bar{p} \log \bar{p}.  \label{eq:fundamental-limit}
+\end{align}
+
+\paragraph{Von Neumann's (suboptimal) extractor.} We now describe a very popular suboptimal approach, attributed to John von Neumann, for extracting fair coin tosses from a biased coin. Assume $n = 2m$, and proceed as follows: 
+\begin{itemize}
+\item Pair off the $n$ coin tosses into $m$ pairs $(X_1, X_2), \ldots, (X_{2i-1}, X_{2i}), \ldots, (X_{n-1}, X_n)$. 
+\item For each $i \in \{1, \ldots, m\}$, define $B_i$ as follows: 
+\begin{align}
+B_i = \begin{cases}
+1, & \text{ if } X_{2i-1} \neq X_{2i}, \\
+0, & \text{ if } X_{2i-1} = X_{2i}. 
+\end{cases}
+\end{align}
+Set $L = \sum_{i=1}^n B_i$. 
+\item Let $I_1, \ldots, I_L$ denote the indices of the pairs for which $B_i=1$. Then, define $Z^L = (Z_1, \ldots, Z_L)$, with $Z_j=1$ if $(X_{2I_j-1}, X_{2I_j}) = (0, 1)$ and $Z_j=0$ if $(X_{2I_j-1}, X_{2I_j}) = (1, 0)$. 
+\end{itemize}
+
+\begin{proposition}
+\label{prop:von-neumann-extractor} We can show that the $(L, Z^L)$ constructed using von Neumann's extractor satisfies~\eqref{eq:fair-coin-toss}, and furthermore, we have 
+\begin{align}
+\frac{\mathbb{E}[L]}{n} = 2 p (1-p) \leq h(p). 
+\end{align}
+\end{proposition}
+
+\begin{remark}
+\label{remark:peres} 
+To see that the above procedure is suboptimal, for $p=0.5$~(i.e., if the given coin is already fair), we have $h(p)=1$ bit, while $2p(1-p) = 0.5$. Hence, von Neumann's procedure discards half of the (already) fair coin tosses unnecessarily in this case. 
+
+\citet{peres1992iterating} proposed a simple iterative strategy that feeds back the discarded bits (i.e., with $B_i=0$) and an ``XoR stream'' into a recursive mechanism, to get an extraction procedure that achieves the optimal rate of~\eqref{eq:fundamental-limit} in the limit of $n \to \infty$ and infinite recursion steps~(Proposition 3 of~\citet{peres1992iterating}).  
+\end{remark}
+
+
+
+
+
+\bibliographystyle{abbrvnat}           % if you need a bibliography
+\bibliography{../ref}                % assuming yours is named ref.bib
+
+
+\end{document}
