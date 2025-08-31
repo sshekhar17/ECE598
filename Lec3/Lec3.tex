@@ -1,0 +1,284 @@
+\documentclass[12pt]{article}
+\usepackage[english]{babel}
+\usepackage[utf8x]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{../scribe}
+\usepackage{listings}
+
+\usepackage{hyperref}
+% \usepackage{cleveref}
+\usepackage{xcolor}
+\usepackage{natbib}
+\usepackage{tikz}
+\renewcommand{\arraystretch}{1.5}
+\usepackage{nicefrac}
+% \newcommand{\thetahat}{\widehat{\theta}}
+% \Scribe{Shubhanshu Shekhar}
+\Lecturer{Shubhanshu Shekhar}
+\LectureNumber{3}
+\LectureDate{September 02, 2025}
+\LectureTitle{Properties of Information Measures}
+
+\lstset{style=mystyle}
+% \usepackage{tikz}
+\usepackage{comment}
+% \usepackage{pgfplots}
+% \usepackage{enumitem}
+\input{../preamble}
+\input{../newMacros}
+
+
+\begin{document}
+	\MakeScribeTop
+%#############################################################
+%#############################################################
+%#############################################################
+%#############################################################
+
+In this lecture, we continue our discussion of the properties of information measures. We begin by establishing the convexity/concavity properties of the three main information measures, and then state and prove Fano's inequality that will often be used in proving `converse results'~(or impossibility results). We end the lecture by discussing an important (functional) variational definition of relative entropy, called the Donsker-Varadhan representation. 
+
+\section{Convexity/Concavity of Information Measures}
+
+For simplicity, we will focus on the case of discrete distributions. As we discussed in the last lecture, many results for relative entropy and mutual information can be generalized to arbitrary distributions via the Gelfand-Yaglom-Peres variational representation. 
+
+\begin{theorem}
+	\label{theorem:convexity-concavity-of-information-measures}
+	Suppose $\calX$ and $\calY$ denote two finite alphabets of sizes $m$ and $n$. Then, the following statements are true: 
+	\begin{enumerate}
+		\item Suppose $P_1, P_2, Q_1$ and $Q_2$ distributions on the finite alphabet $\calX$. For any $\lambda \in [0,1]$, define $P^\lambda = \lambda P_1 + \bar{\lambda} P_2$ and $Q^\lambda = \lambda Q_1 + \bar{\lambda} Q_2$ where $\bar{\lambda} = 1-\lambda$. Then, we have 
+		\begin{align}
+			\dkl(P^\lambda \parallel Q^\lambda) \leq \lambda \dkl(P_1 \parallel Q_1) + \bar{\lambda} \dkl(P_2 \parallel Q_2). 
+		\end{align}
+		That is $\dkl$ is jointly convex in its arguments. Setting $P_1 = P_2$ or $Q_1=Q_2$, this also implies that $\dkl$ is convex in each of its arguments~(with the other kept fixed). 
+		\item Suppose $X \sim P_X$ is a $\calX$ valued random variable. Then, $H(P_X)$ is a concave function of $P_X$.  
+		\item Suppose $P_{XY}$ is a joint distribution on $\calX \times \calY$. Then, $I(X; Y) \equiv I(P_{XY})$ is a convex function of $P_{Y|X}$ for a fixed input distribution $P_X$, and it is a concave function of $P_{X}$ for a fixed channel $P_{Y|X}$. 
+	\end{enumerate}
+\end{theorem}
+
+
+\subsection{Proof of Theorem~\ref{theorem:convexity-concavity-of-information-measures}}
+\label{proof:convexity-concavity-of-information-measures}
+
+A standard proof of the convexity of relative entropy is via an intermediate ``log-sum-inequality''. See Chapter 2 of Cover and Thomas for the details. Here we present a minor generalization of that approach using the notion of ``perspective of a function''~\citep[Sec. 3.2.6]{boyd2004convex}. The benefit is that the same argument will work for a more general class of information measures called $f$-divergences. 
+
+\begin{lemma}
+	\label{lemma:perspective-transform} Let $\varphi:[0, \infty) \to [0, \infty]$ be a convex function. Then, the perspective of $\varphi$, denoted by $\varphi^\pi:[0, \infty) \times (0, \infty) \to [0, \infty]$ is defined as 
+	\begin{align}
+		\varphi^\pi(z, t) = t \varphi(z/t)
+	\end{align}
+	is also convex. That is, the perspective operation preserves convexity. 
+\end{lemma}
+\begin{proof}
+	The result follows directly from the convexity of $\varphi$. Let $(z_1, t_1)$ and $(z_2, t_2)$ denote two points in the domain of $\varphi^\pi$. For any $\lambda \in [0,1]$, let $(z_\lambda, t_\lambda)$ denote their convex combination. Then, we have 
+	\begin{align}
+		\varphi^{\pi}(z_\lambda, t_\lambda) &= t_\lambda \varphi\lp \frac{\lambda z_1}{t_\lambda} + \frac{\bar{\lambda} z_2}{t_\lambda} \rp  
+		= t_\lambda \varphi\lp \frac{\lambda t_1 }{t_\lambda} \frac{z_1}{t_1} + \frac{\bar{\lambda} t_2 }{t_\lambda} \frac{z_2}{t_2} \rp  \\
+		&\leq t_\lambda\lp \frac{\lambda t_1 }{t_\lambda} \varphi(z_1/t_1) + \frac{\bar{\lambda} t_2 }{t_\lambda} \varphi(z_2/t_2)\rp && (\text{convexity of } \varphi(\cdot)) \\
+		& = \lambda \varphi^\pi(z_1, t_1) + \bar{\lambda} \varphi^{\pi}(z_2, t_2) && (\text{definiton of } \varphi^\pi). 
+	\end{align}
+\end{proof}
+
+\paragraph{Convexity of Relative Entropy.} Consider the following instance of the above result: $\varphi(u) = u \log u$, $(z_1, t_1) = (p_1(x), q_1(x))$, $(z_2, t_2) = (p_2(x), q_2(x))$, and $(z_\lambda, t_\lambda) = (p_\lambda(x), q_\lambda(x))$. Then, by~Lemma~\ref{lemma:perspective-transform}, we know that $\varphi^\pi$ is convex, which implies 
+\begin{align}
+	p_\lambda(x) \log \lp \frac{p_\lambda(x)}{q_\lambda(x)}\rp &= \varphi^\pi(z_\lambda, t_\lambda) \leq \lambda \varphi^\pi(z_1, t_1) + \bar{\lambda} \varphi^{\pi}(z_2, t_2) \\ 
+	&= \lambda p_1(x) \log \lp \frac{p_1(x)}{q_1(x)} \rp + \bar{\lambda} p_2(x) \log \lp \frac{p_2(x)}{q_2(x)} \rp. 
+\end{align}
+Summing this inequality over all $x \in \calX$ establishes the convexity of relative entropy. 
+\begin{remark}
+	As we will see in the next lecture, the same argument directly extends to a larger class of divergences called the $f$-divergence family, which includes measures like total variation, chi-squared, Hellinger metric, Jensen-Shannon divergence, etc.  
+\end{remark}
+
+
+\paragraph{Concavity of Entropy.} This is a direct consequence of the convexity of relative entropy. In particular, note that the entropy of $X \sim P_X$ can be writen as 
+\begin{align}
+H(P_X) = H(X) &= \sum_{x \in \calX} p_X(x) \log \lp \frac{1}{p_X(x)} \rp = -\sum_{x \in \calX} p_X(x) \log \lp \frac{p_X(x)}{1/|\calX|} \rp + \log(|\calX|) \\
+& = \log(|\calX|) - \dkl(P_X \parallel P_U), 
+\end{align}
+where $P_U$ denotes the uniform distribution over the finite alphabet $\calX$. Since we have already proved that relative entropy is convex in its second argument, this implies the concavity of entropy. 
+
+\paragraph{Convexity/Concavity of Mutual Information.} Let us first consider the case of a fixed marginal $P_X$. Then, we have 
+\begin{align}
+I(X;Y) &= \dkl(P_{Y|X} \parallel P_Y | P_X)  = \dkl(P_{Y|X} \parallel \sum_{x} P_X(x) P_{Y|X=x} \mid P_X). 
+\end{align}
+Since $P_Y$ is a linear function of $P_{Y|X}$ and relative entropy is convex in both of its arguments, we can conclude that the above expression is convex in $P_{Y|X}$. 
+
+Next, we consider the case of a fixed $P_{Y|X}$. In this case, it is cleaner to work with the entropy definition: 
+\begin{align}
+I(X;Y) = H(Y) - H(Y|X). 
+\end{align}
+Observe that $H(Y)$ is concave in $P_Y$,  $P_Y$ is a linear function of $P_X$, and $H(Y|X)$ is a linear function of $P_X$. Hence, $I(X;Y)$ is the sum of two terms: the first is concave~$\circ$~linear in $P_X$ and the second is linear in $P_X$. Together it implies that $I(X;Y)$ is concave in $P_X$, with $P_{Y|X}$ fixed. 
+
+\section{Fano's inequality}
+
+Consider the following estimation problem: Let $W \in \calW$ denote some unknown parameter (or message to be communicated), and let $Y \in \calY$ denote  the observations with conditional distribution~(or channel) $P_{Y|X}$. Suppose we construct an estimate of $W$, denoted by $\hat{W} \in \calW$ based only on the observation $Y$. Let us denote the (possibly randomized) estimation procedure by $P_{\hat{W}|Y}$. We are interested in understanding how small the probability of error, $p_e = \mathbb{P}(\hat{W} \neq W)$ can be? Clearly, this answer should depend on how ``informative'' the observations $Y$ are about the unknown parameter $W$. One way to formalize this is via Fano's inequality. 
+
+\begin{theorem}
+\label{theorem:fano} 
+Given the Markov chain $W \rightarrow Y \rightarrow \hat{W}$, with $W, \hat{W} \in \calW$ and $Y \in \calY$ for some finite alphabets $\calW, \calY$, let $p_e$ denote the probability $\mathbb{P}(\hat{W} \neq W)$. Then, we have the following relation 
+\begin{align}
+h_b(p_e) + p_e \log(|\calW|-1) \geq H(W|\hat{W}) \geq H(W|Y), 
+\end{align}
+where $h_b(p) = - p \log p - \bar{p}\log(\bar{p})$ is the binary entropy function. 
+\end{theorem}
+\begin{proof}
+The classical proof of this result is by introducing an error indicator $E = \boldsymbol{1}_{\hat{W}\neq W}$, and observing that $E \sim \Bernoulli(p_e)$ by definition. Then, observe the following: 
+\begin{align}
+H(W, E|\hat{W}) = \red{H(E|\hat{W}) + H(W|E, \hat{W})} = \blue{H(W|\hat{W}) + H(E|\hat{W}, W)}. 
+\end{align}
+The blue term is easy to analyze: since $E = \boldsymbol{1}_{W \neq \hat{W}}$~(i.e., $E$ is a deterministic function of $W, \hat{W}$), the conditional entropy $H(E|W, \hat{W}) = 0$. Thus, we have 
+\begin{align}
+\blue{H(W|\hat{W}) + H(E|\hat{W}, W)} =  H(W|\hat{W}). \label{eq:fano-proof-1}
+\end{align}
+For the red term, we can get an upper bound as follows: 
+\begin{align}
+	\red{H(E|\hat{W}) + H(W|E, \hat{W})} &\leq H(E) +  H(W|E, \hat{W}) \\
+	& = h_b(p_e) + \mathbb{P}(E=1) H(W|E=1, \hat{W}) +  \mathbb{P}(E=0) H(W|E=0, \hat{W}) \\
+	& = h_b(p_e) + p_e \underbrace{H(W|\hat{W}, E=1)}_{\leq \log(|\calW|-1)} + (1-p_e) \underbrace{H(W|E=0, \hat{W})}_{=0} \label{eq:fano-proof-2}
+\end{align}
+The first inequality is due to the "conditioning reduces entropy" fact. In the last line, we use the fact that given $E=1$~(error) and $\hat{W}$, the random variable $W$ can take one of $|\calW|-1$ values. Hence, the conditional entropy $H(W|\hat{W}, E=1)$ is upper bounded by $\log(|\calW|-1)$. Finally, given that $E=0$~(no error) and $\hat{W}$, there is no uncertainty about $W$; hence $H(W|E=0, \hat{W})=0$. Combining~\eqref{eq:fano-proof-1} and~\eqref{eq:fano-proof-2} we get the required 
+\begin{align}
+H(W|Y) \leq H(W|\hat{W}) \leq  h_b(p_e) + p_e\log(|\calW|-1). 
+\end{align}
+The first inequality is due to the DPI for entropy.  This completes the proof. See also~\citep[Section~3.6]{polyanskiy2025information} for an alternative proof technique. 
+\end{proof}
+
+\paragraph{Interpretation.} To interpret Fano's inequality, let us simplify the expression with $h_b(p_e) \leq 1$, and $\log(|\calW|-1) \leq \log(|\calW|)$, to get 
+\begin{align}
+\inf_{P_{\hat{W}|W}}\mathbb{P}(\hat{W} \neq W) \geq \frac{H(W|Y) - 1}{\log(|\calW|)}. 
+\end{align}
+In other words, there is a fundamental lower bound on the error that can be achieved by any estimator that is characterized by $H(W|Y)$: the uncertainty about $W$ given the observations $Y$. If there is a large amount of uncertainty about the parameter $W$ after knowing $Y$, it is impossible to drive the probability of error below the fundamental limit implied by RHS above. 
+
+To simplify further, assume that $W  \sim \mathrm{Uniform}(\calW)$, or $H(W) = \log(|\calW|)$, we get 
+\begin{align}
+\inf_{P_{\hat{W}|W}}\mathbb{P}(\hat{W} \neq W) \geq \frac{\blue{H(W)} - (\blue{ H(W)} - H(W|Y)) - 1}{\log(|\calW|)} = 1 - \frac{I(W;Y)+1}{\log(|\calW|)}. 
+\end{align}
+In other words, the minimum probability of error achievable depends inversely on the mutual information between the unknown parameter $W$ and the observation $Y$. 
+
+\section{Application: MAP Estimation and Reverse Fano's}
+Let us return to the estimation problem represented with the following Markov Chain: 
+\begin{align}
+\underbrace{W}_{\text{Unknown Parameter}} \rightarrow \underbrace{Y}_{\text{Observation}} \rightarrow \underbrace{\hat{W} \sim P_{\hat{W}|Y}}_{\text{Estimate}}. 
+\end{align}
+Our goal is to find an estimator $P_{\hat{W}|Y}$ which minimizes the probability of error.  
+\begin{align}
+	P^*_{\hat{W}|Y} = \argmin_{P_{\hat{W}|Y}} \mathbb{P}\lp \hat{W} \neq W\rp. 
+\end{align}
+\begin{proposition}
+\label{prop:MAP-estimation} The optimal estimator $P^*_{\hat{W}|Y}$ is non-randomized~(i.e., represented by a map $g^*:\calY \to \calW$), and is defined as 
+\begin{align}
+g^*(y) = \argmax_{w \in \calW} p_{W|Y}(w|y),\qtext{with} \mathbb{P}(g^*(Y) \neq W) =  \sum_{y \in \calY} p_Y(y) (1 - \max_{w \in \calW} p_{W|Y}(w|y)). 
+ \label{eq:map-estimator-def}
+\end{align}
+This is also called the Maximum Aposteriori Probability~(MAP) estimator. 
+\end{proposition}
+\begin{proof}
+We can prove this by using the Markov property to state the error in a suitable form. For any estimator $P_{\hat{W}|Y}$, we have  
+\begin{align}
+\mathbb{P}(\hat{W} \neq W) &= \sum_{w, y, \hat{w}} P_{WY\hat{W}}(w, y, \hat{w}) \boldsymbol{1}_{w \neq \hat{w}} && \\
+& = \sum_{w, y, \hat{w}} p_Y(y) p_{W|Y}(w|y) p_{\hat{W}|Y} (\hat{w}|y) && (\text{since }W \perp \hat{W}|Y) \\
+& = \sum_{y} p_Y(y) \sum_{\hat{w}} p_{\hat{w}|Y}(\hat{w}|y) \sum_{w \neq \hat{w}} p_{W|Y}(w|y). 
+\end{align}
+Since $\sum_{w \neq \hat{w}} p_{W|Y}(w|y) = (1- p_{W|Y}(\hat{w}|y))$, we get 
+\begin{align}
+\mathbb{P}(\hat{W} \neq W)& = \sum_{y} p_Y(y) \sum_{\hat{w}} p_{\hat{w}|Y}(\hat{w}|y) (1- p_{W|Y}(\hat{w}|y)) \\
+\end{align}
+Let $w_y = \argmax_{w \in \calW} p_{W|Y}(w|y)$~(breaking ties arbitrarily), and observe that for any conditional pmf $p_{\hat{W}|Y}(\cdot |y)$, we have 
+\begin{align}
+\sum_{\hat{w}} p_{\hat{w}|Y}(\hat{w}|y) (1- p_{W|Y}(\hat{w}|y)) \geq 1 - p_{W|Y}(w_y|y), 
+\end{align}
+with equality if $p_{\hat{W}|Y}(w_y|y) = 1$. Thus, $g^*(y) = w_y \in \argmax_{w \in \calW} p_{W|Y}(w|y)$ is an estimator that achieves the minimum probability of error. 
+\end{proof}
+
+The intuition behind the MAP estimator is simple: given the observation $Y=y$, we set our estimator value to $w_y$; the parameter value that is most likely to be true given $Y=y$. We can now use this estimator to state a ``reverse Fano's' inequality: \emph{just as Fano's inequality lower bounds the minimum probability of error in terms of $H(W|Y)$, reverse Fano's gives us an upper bound on $p_e^* = \mathbb{P}(g^*(Y) \neq W)$ in terms of a function involving $H(W|Y)$. In particular, it tells us that $p_e^*$ cannot be too large if $H(W|Y)$ is small.}. 
+
+\begin{proposition}
+\label{prop:reverse-Fano}
+Let $g^*$ denote the MAP estimator and let $p_e^*$ denotes its probability of error. Then, we have 
+\begin{align}
+p_e^* \leq 1 - 2^{-H(W|Y)}. 
+\end{align}
+\end{proposition}
+%
+\begin{proof}
+Note that we need to show that $H(W|Y) \geq \log(1/(1-p^*_e))$, where 
+\begin{align}
+p^*_e = \sum_y p_Y(y) (1 - \max_w p_{W|Y}(w|y)) = \sum_{y} p_Y(y) (1 -  p(w_y|y)), \label{eq:reverse-fano-proof-1}
+\end{align}
+where recall that $w_y \in \argmax_{w \in \calW} p_{W|Y}(w|y)$. 
+Let us now look at the conditional entropy of $W$ given $Y=y$: 
+\begin{align}
+H(W|Y=y) &=  \sum_{w \in \calW} p_{W|Y}(w|y) \log \lp1/p_{W|Y}(w|y) \rp \\
+& \geq \sum_{w} p_{W|Y}(w|y) \log \lp \frac{1}{\max_{w} p_{W|Y}(w|y)} \rp  = \log\lp \frac{1}{p_{W|Y}(w_y|y)} \rp
+\end{align}
+On simplifying this gives us $p_{W|Y}(w_y|y) \geq 2^{-H(W|Y=y)}$, or $1 - p_{W|Y}(w_y|y) \leq 1 - 2^{-H(W|Y=y)}$. Using this inequality with~\eqref{eq:reverse-fano-proof-1}, we get 
+\begin{align}
+p_e^* &\leq \sum_{y \in \calY} p_Y(y) \lp 1 - 2^{-H(W|Y=y)} \rp   = 1 - \sum_{y} p_Y(y) 2^{- H(W|Y=y)} \\
+& \stackrel{\text{Jensen's}}{\leq} 1 - 2^{- \sum_y p_Y(y) H(W|Y=y)} = 1 - 2^{-H(W|Y)}. 
+\end{align} 
+This completes the proof. 
+\end{proof}
+
+
+\section{Donsker-Varadhan Variational Representation}
+A standard fact in convex analysis says that any convex function can be written as the supremum of a collection of linear or affine functions. We have already proved that the mapping $P \mapsto \dkl(P\parallel Q)$, for a fixed $Q$, is convex, and our next result discusses a representation of $\dkl(P \parallel Q)$ as a supremum of a particular class of affine functions of $P$. 
+
+\begin{theorem}[Donsker-Varadhan Representation]
+\label{theorem:Donsker-Varadhan} Suppose $P, Q$ are two distributions on an alphabet $\calX$~(not necessarily finite), and let $\calC_Q = \{f:\calX \to \mathbb{R} \cup \{-\infty\}: \mathbb{E}_{X \sim Q}[e^f(X)] < \infty \}$. Then, we have the following: 
+\begin{align}
+\dkl(P \parallel Q) = \sup_{f \in \calC_Q}\; \mathbb{E}_P[f(X)] -  \log \mathbb{E}_Q[e^f(X)]. 
+\end{align}
+Observe that for a fixed $(f, Q)$, the term inside the supremum above is an affine function of $P$. 
+\end{theorem}
+We will discuss the general idea of the proof, while not accounting for certain technicalities. For a more rigorous proof, see~\citep[Section 4.3]{polyanskiy2025information}. 
+
+\begin{proof}
+For simplicity,  we will assume that $\dkl(P \parallel Q) < \infty$, and $P, Q$ have densities $p, q$ with respect to some dominating measure $\mu$. Let us define the ``tilted measure'' associated with $Q$, and denoted by $Q_f$, as a distribution with density $q_f(x) = q(x) e^{f(x) - \psi_{Q,f}}$, where $\psi_{Q,f} = \log E_Q[e^f(X)]$. Then, observe that $\log(q_f/q) = f - \psi_{Q,f}$, which implies the following: 
+\begin{align}
+	\mathbb{E}_P[f(X) - \psi_{Q,f}] &= \mathbb{E}_P\lb \log \lp \frac{q_f}{q} \rp \rb = \mathbb{E}_P\lb \log \lp \frac{p}{q} \rp - \log \lp \frac{p}{q_f} \rp  \rb  \\
+	& = \dkl(P \parallel Q) - \dkl(P \parallel Q_f) \leq \dkl(P \parallel Q). 
+\end{align}
+Thus, we have proved that for any $f \in \calC_Q$, we have $\mathbb{E}_P[f(X) - \psi_{Q,f}] \leq \dkl(P  \parallel Q)$, which implies that 
+\begin{align}
+\sup_{f \in \calC_Q} \mathbb{E}_P[f(X)] - \log \mathbb{E}_Q\lb e^{f(X)} \rb \leq \dkl(P \parallel Q). \label{eq:DV-proof-1}
+\end{align}
+This shows one direction of the required equality. For the other direction, condider the function $f = \log (p/q)$, and observe that $f \in \calC_Q$, and 
+\begin{align}
+\mathbb{E}_P[f(X)] - \log E_Q[e^{f(X)}] = \mathbb{E}_P[\log(p/q)] - \log E_Q[p/q] = \dkl(P \parallel Q) - \log 1 = \dkl(P \parallel Q). 
+\end{align}
+Hence, on taking supremum over all $f$, we get the other direction 
+\begin{align}
+\sup_{f \in \calC_Q} \mathbb{E}_P[f(X)] - \log \mathbb{E}_Q[e^{f(X)}] \geq \dkl(P \parallel Q). \label{eq:DV-proof-2}
+\end{align}
+Combining~\eqref{eq:DV-proof-1} and~\eqref{eq:DV-proof-2}, we get the required equality. 
+\end{proof}
+
+This result finds a large number of applications in probability, statistics, and machine learning. We discuss one such application next. 
+
+\subsection{Application: Estimation of Relative Entropy and Density Ratio}
+\label{subsec:application-DV-KL-estimation} 
+
+\paragraph{Problem Statement.} Let $X^n = (X_1, \ldots, X_n) \simiid P_X$ with density $p$, and $Y^m = (Y_1, \ldots, Y_m) \simiid Q_Y$ with density $q$~(both w.r.t. the Lebesgue measure on $\mathbb{R}^d$) denote two sets of data points lying in $\calX = \mathbb{R}^d$. For example, $X^n$ could represent $n$ natural images, and $Y^m$ could be a set of images generated by an AI model. Our goal is to use this data to (i) estimate the relative entropy between $P_X$ and $Q_Y$, and (ii) estimate the density-ratio function $\ell(\cdot) = p(\cdot)/q(\cdot)$. 
+
+\paragraph{Some naive approaches.} A natural idea might be to construct the empirical distributions, $\Phat_n = \frac{1}{n} \sum_{i=1}^n \delta_{X_i}$ and $\Qhat_m = \frac{1}{m} \sum_{j=1}^m \delta_{Y_j}$, and plug them into the standard expression of relative entropy. However, this approach will almost always fail as $\Phat_n \not \ll \Qhat_m$ for most data realizations. A more refined approach is to construct ``smoothed'' density estimators, and use them to evaluate the relative entropy. However, this method suffers from needing to evaluate a high-dimensional integral. 
+
+\paragraph{DV-based solution.} The DV representation allows us to translate the estimation problem into an optimization problem, which can then be practically solved using gradient based solvers. Formally, let $\calF_\Theta = \{f_\theta: \theta \in \Theta\}$ denote a class of functions parameterized by $\Theta$~(for example, $\calF_\Theta$ could represent all neural networks with a particular architecture). Then, we know from the DV representation of relative entropy that 
+\begin{align}
+\dkl(P_X \parallel Q_Y) \geq \sup_{f_\theta \in \calF_\Theta} \mathbb{E}_{P_X}[f_\theta(X)] - \log \lp \mathbb{E}_{Q_Y}[e^{f_\theta(Y)}] \rp. 
+\end{align}
+Replacing the expectations with their empirical counterparts, we get the estimate for relative entropy
+\begin{align}
+	\widehat{D}_{n,m} = \max_{f_\theta \in \calF_\Theta}  \frac{1}{n} \sum_{i=1}^n f_\theta(X_i) - \frac{1}{m} \sum_{j=1}^m e^{f_\theta(Y_j)}, 
+\end{align}
+as well as for the density ratio 
+\begin{align}
+\widehat{\ell}_{n,m} = \argmax_{f_\theta \in \calF_\Theta} \frac{1}{n} \sum_{i=1}^n f_\theta(X_i) - \frac{1}{m} \sum_{j=1}^m e^{f_\theta(Y_j)}. 
+\end{align}
+
+From a theoretical perspective, if we assume that the true density ratio $p/q$ lies in the function class $\calF_\Theta$~(or can be well approximated by it), and under certain capacity assumptions on $\calF_\Theta$, we can show that $|\widehat{D}_{n,m} - \dkl(P_X \parallel Q_Y)| \overset{n,m\to \infty}{\longrightarrow} 0$. 
+In practice, by using a sufficiently large neural netowrk, we can ensure that the condition $p/q \in \calF_\Theta$ is satisfied, and a solution can be obtained by running SGD on the empirical loss. 
+% \newpage
+\bibliographystyle{abbrvnat}           % if you need a bibliography
+\bibliography{../ref}                % assuming yours is named ref.bib
+
+
+\end{document}
