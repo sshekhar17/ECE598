@@ -1,0 +1,346 @@
+\documentclass[12pt]{article}
+\usepackage[english]{babel}
+\usepackage[utf8x]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{../scribe}
+\usepackage{listings}
+
+\usepackage{hyperref}
+% \usepackage{cleveref}
+\usepackage{xcolor}
+\usepackage{natbib}
+\usepackage{tikz}
+\renewcommand{\arraystretch}{1.5}
+\usepackage{nicefrac}
+% \newcommand{\thetahat}{\widehat{\theta}}
+% \Scribe{Shubhanshu Shekhar}
+\Lecturer{Shubhanshu Shekhar}
+\LectureNumber{4}
+\LectureDate{September 4, 2025}
+\LectureTitle{$f$-divergences}
+
+\lstset{style=mystyle}
+% \usepackage{tikz}
+\usepackage{comment}
+% \usepackage{pgfplots}
+% \usepackage{enumitem}
+\input{../preamble}
+\input{../newMacros}
+
+
+\begin{document}
+	\MakeScribeTop
+%#############################################################
+%#############################################################
+%#############################################################
+%#############################################################
+
+In this lecture, we introduce the notion of $f$-divergences, discuss some of its main instances~(relative entropy, total variation, Hellinger distance, and chi-squared divergence), and derive some useful inequalities comparing these divergences. \blue{Note: all $\log$s starting with this lecture will be natural logarithms.}
+
+\section{Definition and Some Examples}
+\begin{definition}
+    \label{def:f-divergence}
+    Let $f:(0, \infty)$ denote a convex function with $f(1)=0$, and let $f(0)\defined \lim_{x \downarrow 0} f(x)$. Consider two probability measures $P, Q$ on a common space $(\calX, \mc{F})$, with $P \ll Q$~(i.e., $Q(E)=0 \implies P(E)=0$ for $E \in \calF$). Then the $f$-divergence between $P$ and $Q$ is defined as 
+    \begin{align}
+        D_f(P \parallel Q) \defined \mathbb{E}_{X \sim Q} \lb f\lp \frac{dP}{dQ}(X) \rp \rb, \label{eq:f-divergence-def} 
+    \end{align}
+    where $dP/dQ$ is the \href{https://en.wikipedia.org/wiki/Radon–Nikodym_theorem}{Radon-Nikodym derivative} of $P$ with respect to $Q$~(here we have used the assumption that $P \ll Q$). 
+\end{definition}
+
+\begin{remark}
+	\label{remark:non-uniqueness-of-f-div-generator} 
+	The function $f$ associated with a divergence $D_f$ is referred to as its {generator}. An interesting consequence of the definition is that two distinct function can induce the same divergence. In fact, let $g(x) = f(x) + c(x-1)$. Then, it immediately follows that 
+	\begin{align}
+	D_g(P \parallel Q) = \mathbb{E}_Q[g(dP/dQ)] = \mathbb{E}_Q[f(dP/dQ)] + c \mathbb{E}_Q[dP/dQ - 1] = \mathbb{E}_Q[f(dP/dQ)] = D_f(P \parallel Q). 
+	\end{align}
+\end{remark}
+\begin{remark}
+    \label{remark:non-singular-extension} In the general case of when $P \not \ll Q$, we can use the Lebesgue decomposition of $P$, that is, $P = P^{(a)} + P^{(s)}$,  where $P^{(a)} \ll Q$ is the absolutely continuous part of $P$~(w.r.t. $Q$), and $P^{(s)} \perp Q$ is the singular part. 
+    With this decomposition, the $f$-divergence between $P$ and $Q$ is defined as 
+    \begin{align}
+        D_f(P \parallel Q) \defined \mathbb{E}_{X \sim Q} \lb f \lp \frac{dP^{(a)}}{dQ}(X) \rp \rb + P^{(s)}(\calX)f'(\infty), 
+    \end{align}
+    where $f'(\infty) = \lim_{x \to 0} x f(1/x)$. 
+
+    To get some intuition behind this definition, suppose $P$ and $Q$ have densities $p$ and $q$ respectively w.r.t. some common dominating measure, $\nu$~(say $P+Q$). Let $E_0 = \{x \in \calX: q(x) = 0, \text{ and } p(x)>0\}$. Then, we have 
+    \begin{align}
+    \int q f\lp \frac{p}{q} \rp d\nu = \int_{\calX \setminus E_0}q f\lp \frac{p}{q} \rp d\nu + \int_{E_0} q f\lp \frac{p}{q} \rp d\nu = \int_{\calX \setminus E_0}q f\lp \frac{p}{q} \rp d\nu + \int_{E_0}  p \frac q  p f\lp \frac{p}{q} \rp d\nu. 
+    \end{align}
+    Since $q=0$ and $p>0$ on $E_0$, we can write the second integral with $\int_{E_0} p \lp \lim_{x \to 0} x f(1/x) \rp d\nu$, which is equal to $\int p f'(\infty) d \nu = f'(\infty) P(\{Q=0\})$. The first integral is simply $\mathbb{E}_{X \sim Q}\lb f(dP^{(a)}/dQ) \rb$.  
+\end{remark}
+
+As always, the main objective behind introducing somewhat abstract definitions (such as $f$-divergence) is to allow a unified study of several, seemingly unrelated, quantities. Let us see how different choices of $f$ give us important statistical divergence/distance measures.
+
+\begin{itemize}
+    \item Relative entropy: with $f(x) = x \log x$, we get $\dkl(P \parallel Q)$, and with $f(x) = -\log(x) + \blue{x - 1}$, we recover $\dkl(Q \parallel P)$. 
+    A symmetric generalization of relative entropy is the Jensen-Shannon Divergence, defined as 
+    \begin{align}
+    JS(P \parallel Q) = \frac{1}{2} \lp \dkl\lp P \parallel \frac{P+Q}{2} \rp +  \dkl\lp Q \parallel \frac{P+Q}{2} \rp \rp . 
+    \end{align}
+    \blue{\emph{Exercise:}} Find an $f$ such that $D_f(P \parallel Q) = JS(P \parallel Q)$.  As we will see later, this $f$ does not have to be unique. An important modern application of the Jensen-Shannon divergence is in the design of Generative Adversarial Networks or GANs.
+
+    \item Chi-squared distance: A popular measure used for instance in nonparametric goodness of fit tests, corresponds to $f(x) = (x-1)^2$ or equivalently $f(x) = x^2 - 1$~(recall~Remark~\ref{remark:non-uniqueness-of-f-div-generator}). 
+
+    \item The total variation metric between two probability measures is defined using $f(x) = |x-1|/2$:
+    \begin{align}
+        d_{TV}\lp P, Q \rp  &= \frac{1}{2} \int  \left\lvert  \frac{p}{q} - 1 \right\rvert q d\nu = \frac{1}{2}\lp \int_{p>q} (p-q) d\nu + \int_{p \leq q} (q-p) d\nu \rp \\
+		& = P(p>q) - Q(p>q). 
+    \end{align}
+
+    \item (Squared) Hellinger metric between $P$ and $Q$ is defined as 
+    \begin{align}
+    H^2(P, Q) = \int \lp \sqrt{p} - \sqrt{q} \rp^2 d\nu,  
+    \end{align}
+    which corresponds to $f(x) = (\sqrt{x}-1)^2$. We can verify that $H(P, Q)$ is a metric on the space of probability measures. 
+\end{itemize}
+
+\begin{remark}
+	\label{remark:f-div-intuition}
+	Suppose $P$ and $Q$ have densities $p, q$, and let $\ell = p/q$ denote their likelihood ratio function. Then, $D_f(P \parallel Q)$ is a measure of how much does $\ell$ deviate from the value $1$, where the penalty for deviating from $1$ is characterized by the function $f$. Different choices of $f$ penalized different behaviors: 
+	\begin{itemize}
+		\item $f(x) = x \log x$ most heavily penalizes $\ell \gg 1$ regimes 
+		\item $f(x) = - \log x + x -1$ penalizes the $\ell \approx 0$ regimes  
+		\item $TV$ corresponds to the robust, absolute value influence 
+		\item $H^2$ correspond to $L^2$ norm of the densities after square-root map
+	\end{itemize}
+\end{remark}
+
+
+
+\subsection{Properties}
+\label{subsec:properties-f-divs}
+We now record some properties of $f$-divergences under a simplified setting: Throughout, for simplicity, we will assume that $P$ and $Q$ have densities $p$ and $q$ with respect to the Lebesgue measure. We begin with the simplest property that states that $f$-divergences are nonnegative. 
+
+\paragraph{Nonnegativity.} This is a simple consequence of the convexity of $f$. In particular, note that 
+\begin{align}
+D_f(P \parallel Q) = \int q(x) f \lp \frac{p(x)}{q(x)} \rp dx \stackrel{\text{Jensen's}}{\geq} f \lp \int \frac{p(x)}{q(x)} q(x)dx  \rp = f(1) = 0. 
+\end{align}
+The last equality uses the requirement that $f(1)=0$. Furthermore, if $f$ is strictly convex at $1$, then it is also true that $D_f(P\parallel Q) = 0$ implies $P=Q$. 
+
+\paragraph{Monotonicity.} We had proved the following chain rule for relative entropy 
+\begin{align}
+\dkl(P_{XY} \parallel Q_{XY}) = \dkl(P_X \parallel Q_X) + \dkl(P_{Y|X} \parallel Q_{Y|X}| P_X) \geq \dkl(P_X \parallel Q_X). 
+\end{align}
+The first equality above was obtained as a special consequence of the property of logarithms~(changes products $p_{XY}(x,y) = p_X(x) p_{Y|X}(y|x)$ into sums), and this is generally not possible to obtain for general $f$. However, the inequality that establishes a ``monotonicity'' between marginal and joint relative entropy can still be deduced for general $f$. 
+\begin{align}
+D_f(P_{XY} \parallel Q_{XY}) &= \int q_X(x)dx \int f\lp \frac{p_{XY}(x,y)}{q_{XY}(x,y)} \rp q_{Y|X}(y|x)dy \\ 
+& \stackrel{\text{Jensen's}}{\geq} \int q_X(x) f\lp \frac{p_{X}(x) }{q_{X}(x)} \int \frac{p_{Y|X}(y|x)}{q_{Y|X}(y|x)} q_{Y|X}(y|x) dy \rp  dx \\ 
+&= \int f\lp \frac{p_X(x)}{q_X(x)} \rp q_X(x) dx =  D_f(P_{X} \parallel Q_{X}). 
+\end{align}
+
+\paragraph{Data Processing Inequality (DPI).} Just as we can infer the DPI for relative entropy from the chain rule, we can also prove a similar result for the case of $f$-divergences. In particular, suppose $P_X$ and $Q_X$ are two distributions on an alphabet $\calX$, and let $P_Y$ and $Q_Y$ denote the distributions obtained by passing $P_X, Q_X$ through a common channel $P_{Y|X}$. Then, observe that 
+\begin{align}
+	D_f(P_{XY} \parallel Q_{XY}) = \int q_X(x) p_{Y|X}(y|x) f \lp \frac{p_X(x) \cancel{p_{Y|X}(y|x)}}{q_X(x) \cancel{p_{Y|X}(y|x)}} \rp dx dy = D_f(P_X \parallel Q_X). 
+\end{align}
+On the other hand, by the monotonicity property, we have 
+\begin{align}
+D_f(P_{XY} \parallel Q_{XY}) \geq D_f(P_Y \parallel Q_Y). 
+\end{align}
+Together, these two previous inequalities give us the data processing inequality for $f$-divergences 
+\begin{align}
+D_f(P_{X} \parallel Q_X) \geq D_f(P_Y \parallel Q_Y), \qtext{where} P_Y = P_X P_{Y|X}, \; Q_Y = Q_X P_{Y|X}. 
+\end{align}
+
+\paragraph{Convexity.} The joint convexity of $D_f$ in $(P,Q)$ follows by an identical perspective-based argument that we used for relative entropy in Lecture 3.  We can also prove the convexity by an analog of the log-sum-inequality for general $f$. 
+
+\paragraph{Variational Formulation.} We have the following for convex and lower-semicontinuous $f$ and any function class $\calG$: 
+\begin{align}
+D_f(P\parallel Q) \geq \sup_{g \in \calG} \mathbb{E}_Q[g(Y)] - \mathbb{E}_P[f^*(g(X))], \qtext{where} f^*(y) = \sup_{x \in \mathbb{R}} \lp x y - f(x) \rp, 
+\end{align}
+with equality if and only if $ \partial(\ell) \cap  \mathcal{G} \not= \emptyset$, where $\ell = dP/dQ$. 
+
+Following~\cite{nguyen2010estimating}, we proceed by observing that for convex lower-semicontinuous $f$, we have the following: 
+\begin{align}
+f(x) = \sup_{y \in \mathbb{R}} \lp xy - f^*(y) \rp.  
+\end{align}
+Hence, we have 
+\begin{align}
+D_f(P \parallel Q) &= \mathbb{E}_Q[f(\ell(X))] = \mathbb{E}_Q\lb \sup_{y} \lp y \ell(X) - f^*(y) \rp  \rb  \\
+& = \mathbb{E}_Q\lb \sup_{g} \lp g(X) \ell(X) - f^*(g(X))  \rp \rb \geq  \mathbb{E}_Q\lb \sup_{g \in \mathcal{G}} \lp g(X) \ell(X) - f^*(g(X))  \rp \rb \\
+&  \geq \sup_{g \in \mathcal{G}} \mathbb{E}_Q\lb  \lp g(X) \ell(X) - f^*(g(X))  \rp \rb = \sup_{g \in \mathcal{G}} \mathbb{E}_P[g(X)] - \mathbb{E}_Q[f^*(g(X))]. 
+\end{align}
+
+
+
+
+\section{Some Properties of Specific $f$-divergences}
+\label{sec:specific-f-divs-elementary-properties}
+The three main properties discussed at the end of the previous section are satisfied by all $f$-divergences. In this section, we derive some useful relations that are specific to 
+We now record some useful properties of these divergence measures that will be useful in later lectures. 
+
+\paragraph{Total Variation:} The following are true: 
+		\begin{enumerate}
+			\item The TV distance admits an alternative variational definition: 
+			\begin{align}
+				TV(P, Q) = \sup_{E \text{ measurable}} |P(E) - Q(E)|, 
+			\end{align}
+			and infact $TV(P, Q) = P(E^*) - Q(E^*)$, where $E^* = \{p>q\}$. 
+			\item $TV(P, Q) = 1 - \int_{\calX} (p \wedge q) d\nu$. 
+			\item $0 \leq TV(P, Q) \leq 1$, with $TV(P, Q) = 0$ if and only if $P = Q$, while $TV(P, Q)=1$ if and only if $P \perp Q$. 
+		\end{enumerate}
+	The first statement implies that total variation is also an instance of an \href{https://en.wikipedia.org/wiki/Integral_probability_metric}{integral probability metric~(IPM)}, in addition to being an $f$-divergence. In fact, it is the only statistical distance/divergence that is both an $f$-divergence and an IPM! 
+
+\begin{proof} We proceed as follows: 
+\begin{enumerate}
+	\item We had already shown that $TV(P, Q) = P(p>q) - Q(p>q)$ where $p,q$ denote the densities of $P,Q$. This implies that 
+	\begin{align}
+	TV(P, Q) \leq \sup_{E} |P(E) - Q(E)| = \sup_{E} P(E) - Q(E).  \label{eq:tv-proof-1}
+	\end{align}
+	To show the other direction, consider any measurable $E$, and observe that 
+	\begin{align}
+		P(E) - Q(E) = \int_E (p-q)d\nu = \int_{E \cap E^*} (p-q) d\nu + \int_{E \cap (E^*)^c} (p-q)d\nu. 
+	\end{align}
+	By definition, $(p-q)\leq 0$ on the set $(E^*)^c$, which means that the second integral in the RHS above is $\leq 0$. Hence, 
+	\begin{align}
+	\sup_{E} P(E) - Q(E) \leq \sup_{E} \int_{E \cap E^*} (p-q) d\nu \leq \int_{E^*} (p-q) d\nu = TV(P, Q).  \label{eq:tv-proof-2}
+	\end{align}
+	Together,~\eqref{eq:tv-proof-1} and~\eqref{eq:tv-proof-2} give the required equality.
+
+	\item Observe that 
+	\begin{align}
+		TV(P, Q) &= \int_{p>q} \frac{p-q}{2}  + \int_{p\leq q} \frac{q-p}{2} \qtext{and}
+		1 = \int_{p>q} \frac{p+q}{2}  + \int_{p\leq q} \frac{p+q}{2}. 
+	\end{align}
+	Subtracting the first equality from the second, we get 
+	\begin{align}
+	1 - TV(P, Q) = \int_{p>q} q + \int_{p \leq q} p = \int (p \wedge q), 
+	\end{align}
+	which completes the proof. 
+
+	
+	\item $TV(P, Q) \geq 0$ follows from the nonnegativity of absolute values. If $TV(P, Q)=0$, it means that $|P(E)-Q(E)|=0$ for all $E \in \calF_{\calX}$, which implies that $P(E) = Q(E)$ for all $E \in \calF_{\calX}$. This is exactly the defining condition for $P=Q$. 
+	
+	Since $P(E), Q(E) \in [0,1]$ for all $E \in \calF_{\calX}$, we must have $P(E) - Q(E) \in [-1,1]$, which implies that $|P(E)-Q(E)|\leq 1$. Taking the supremum over all $E \in \calF_{\calX}$ implies that $TV(P, Q) \leq 1$. The case of $TV(P, Q)=1$ implies that for every $\epsilon>0$, there exists an $E_\epsilon$ such that $P(E_\epsilon) - Q(E_\epsilon) \geq 1- \epsilon$. 
+
+	Formally, for any $n \geq 1$, define $E_n$ to be the set with $\epsilon=1/n$. Then, $E^* \defined \cup_{n=1}^{\infty} E_n = \lim_{n \to \infty} \cup_{m \leq n} E_m$ satisfies $P(E^*) = 1$, and $Q(E^*)=0$. Here, we have used the fact that $E^* \in \calF_{\calX}$ as it is a countable union of elements of $\calF_{\calX}$. 
+\end{enumerate}
+This completes the proof.
+\end{proof}
+
+\paragraph{Hellinger Distance.} The Hellinger distance satisfies the following properties: 
+		\begin{enumerate}
+			\item $0 \leq H^2(P, Q) \leq 2$
+			\item If $P = \otimes_{i=1}^n P_i$, and $Q = \otimes_{i=1}^n Q_i$, then we have 
+			\begin{align}
+				H^2(P, Q) = 2 \lp 1 - \prod_{i=1}^n \lp 1 - \frac{H^2(P_i, Q_i)}{2} \rp \rp. \label{eq:hellinger-tensorization}
+			\end{align}
+		\end{enumerate}
+
+\begin{proof}We proceed as follows:
+\begin{enumerate}
+	\item The nonnegativity is follows by definition. For the upper bound, note that $(\sqrt{p} - \sqrt{q})^2 = p + q - 2\sqrt{pq} \leq p + q$. Furthermore, note that the upper bound holds with equality if and only if $pq=0$ almost-surely; that is, when $P$ and $Q$ are singular. 
+	\item To see~\eqref{eq:hellinger-tensorization}: 
+	\begin{align}
+		H^2(P, Q) &= \int \lp 2 - 2 \sqrt{\prod p_i(x_i) q_i(x_i)} \rp \prod dx_i  = 2 - 2\prod \int \sqrt{p_i(x_i) q_i(x_i)} dx_i \\
+		& = 2 - 2 \prod_{i=1}^n \lp 1 - \frac{H^2(P_i, Q_i)}{2} \rp = 2\lp 1 -  \prod_{i=1}^n \lp 1 - \frac{H^2(P_i, Q_i)}{2} \rp \rp. 
+	\end{align}
+\end{enumerate}
+\end{proof}
+
+The second property of Hellinger distance makes it more tractable for analyzing distances between two product measures as compared to TV which does not admit such a decomposition into marginals. 
+
+\paragraph{Chi-Squared Distance.} We record a similar decomposition equality for the case of chi-squared divergence. 
+	Suppose $P = \otimes_{i=1}^n P_i$ and $Q = \otimes_{i=1}^n Q_i$. Then, we have 
+	\begin{align}
+		\chi^2(P \parallel Q) = \prod_{i=1}^n \lp 1 + \chi^2(P_i \parallel Q_i) \rp - 1. 
+	\end{align}
+
+	\begin{proof} The proof of this result follows a similar path as the Hellinger case. 
+		\begin{align}
+			\chi^2(P \parallel Q) &= \int \lp \frac{\prod_i p_i(x_i)}{ \prod_i q_i(x_i)} -1 \rp^2 \prod_i q_i(x_i) dx_i = -1 + \int \frac{\prod_i p_i^2(x_i)}{\prod_i q_i(x_i)} \prod_i dx_i \\
+			& = -1 + \prod_i \int \frac{p_i^2(x_i)}{q_i(x_i)} dx_i = -1 + \prod_{i=1}^n \lp 1 + \chi^2(P_i \parallel Q_i) \rp. 
+		\end{align} 
+		The last equality simply uses the fact that 
+		\begin{align}
+		\chi^2(P_i \parallel Q_i) = \int \frac{p_i^2(x_i)}{q_i(x_i)} dx_i - 1 \; \implies \; \int \frac{p_i^2(x_i)}{q_i(x_i)} dx_i  = 1 + \chi^2(P_i \parallel Q_i). 
+		\end{align}	
+	\end{proof}
+
+
+
+
+
+
+\subsection{Some Inequalities}
+\label{subsec:some-inequalities}
+
+\paragraph{TV and Relative Entropy.}
+Let $P, Q$ denote two distributions on the same alphabet. Then, we have the following 	(with relative entropy in \underline{log with base $e$})
+\begin{align}
+	& TV(P, Q) \leq \sqrt{\frac{1}{2}\dkl(P \parallel Q)} &&  (Pinsker) \\
+	&TV(P, Q)  \leq 1 - e^{-\dkl(P \parallel Q)}. && (Bretagnolle-Huber) 
+\end{align}
+\begin{proof}
+Due to DPI, it suffices to prove Pinsker's inequality for Bernoulli random variables. In particular, observe that for any measurable set $E$, 
+\begin{align}
+\dkl(P \parallel Q) \geq d_{KL}(P(E) \parallel Q(E)). 
+\end{align}
+To show Pinsker's inequality for Bernoulli distributions is an exercise in calculus. We will follow the argument in~\cite{canonne2022short}, by introducing $f(x) = p \log x + \bar{p} \log \bar{x}$. Then, observe that 
+\begin{align}
+d_{KL}(p \parallel q) &= f(p)-f(q) = \int_p^q f'(x)dx = \int_p^q \lp \frac{p}{x} - \frac{1-p}{1-x} \rp dx = \int_{p}^q \frac{p-x}{x(1-x)} dx \\
+& \geq 4 \int_p^q (p-x)dx = 2 (p-q)^2. 
+\end{align}
+Thus, we have 
+\begin{align}
+\dkl(P \parallel Q) \geq \sup_{E} d_{KL}(P(E) \parallel Q(E)) \geq 2 \sup_{E} |P(E) - Q(E)|^2 = 2TV(P, Q)^2. 
+\end{align}
+\end{proof}
+
+\paragraph{TV and Hellinger.} The following inequalities establish a tight connection between TV and Hellinger. 
+\begin{align}
+\frac{1}{2} H^2(P, Q) \leq TV(P, Q) \leq H(P, Q) \sqrt{1 - \frac{H^2(P, Q)}{4}}. 
+\end{align}
+
+\paragraph{Hellinger and Relative Entropy.} The relative entropy~(in base $e$) between two distribution is always larger than the squared Hellinger distance: 
+\begin{align}
+H^2(P, Q) \leq \dkl(P \parallel Q). 
+\end{align}
+\begin{proof}
+The result follows essentially from the inequality that $\log(x) \leq x- 1$ for all $x > 0$. Suppose $P$ and $Q$ have densities $p,q$. Then, $\dkl(P \parallel Q) = \int p \log (p/q) = -2 \int p \log( \sqrt{q/p}) \geq -2 \int p (\sqrt{q/p} - 1) = -2 \int (\sqrt{pq} - 1)  = H^2(P, Q)$. 
+\end{proof}
+\paragraph{Relative Entropy and Chi-Squared.} Finally, we can show that 
+\begin{align}
+\dkl(P \parallel Q) \leq \log(1 + \chi^2(P \parallel Q)) \leq \chi^2(P \parallel Q). 
+\end{align}
+
+
+\begin{proposition}
+	\label{prop:summary-of-inequalities}
+	To summarize, here is the general~(though suboptimal) of inequalities to remember: 
+	\begin{align}
+	\frac{1}{2}H^2(P, Q) \leq TV(P, Q) \leq H(P, Q) \leq \sqrt{\dkl(P \parallel Q)} \leq \sqrt{\chi^2(P \parallel Q)}. 
+	\end{align}
+\end{proposition}
+
+
+\section{Application: Generative Adversarial Networks}
+\label{sec:applications}
+One possible generator function for the Jensen-Shannon divergence is 
+\begin{align}
+f(x) = \frac{1}{2} \lb x \log x - (x+1) \log \lp \frac{x+1}{2} \rp \rb,  \qtext{with} 
+f^*(y) = - \log(2-e^x), \qtext{for} x < \log 2. 
+\end{align}
+Hence, we can obtain the following variational representation of $JS(P \parallel Q)$ as 
+\begin{align}
+JS(P \parallel Q) = \sup_{g:\calX \to (-\infty, \log 2)} \mathbb{E}_P[g(X)] + \mathbb{E}_Q[\log(2 - e^{g(X)})], 
+\end{align}
+which on reparametrizing $h(x) = (1/2)e^{g(x)}$ simplifies to 
+\begin{align}
+JS(P \parallel Q) = \log 2 + \sup_{h: \calX \to (0, 1)} \mathbb{E}_P[\log h(X)] + \mathbb{E}_Q[\log(1-h(X))]. 
+\end{align}
+
+\paragraph{Idea behind GANs:} Let $P$ denote some distribution we want to estimate, and let $Q$ denote a model distribution; for example, obtained by passing $Z \sim P_Z = N(0, I_d)$ through a neural network $G$~(called the ``generator network''). Ignoring $\log2$, the goal of generator is to find the best $G$ from a family that minimizes the JS divergence between $P$ and $G(Z)$: 
+\begin{align}
+\min_{G \in \calG} \sup_{h: \calX \to (0,1)} \mathbb{E}_P[\log h(X)] + \mathbb{E}_Z[\log(1-h(G(Z)))]. 
+\end{align}
+In practice, these expectations are often in very high dimensional spaces~(images, videos, etc.), and  $P$ is only known through a finite dataset $X^n$. Furthermore, it is usually computationally infeasible to evaluate the ``$\sup$'' over all measurable $(0,1)$ valued functions. Instead, the sup is taken over another class of neural networks, called the discriminator $D$: 
+\begin{align}
+\inf_{G} \sup_{D} \frac{1}{n} \sum_{i=1}^n \log D(X) + \frac{1}{m} \sum_{i=1}^m \log (1 - D(G(Z_i))). 
+\end{align}
+
+
+\bibliographystyle{abbrvnat}           % 
+\bibliography{../ref}                % 
+
+
+\end{document}
