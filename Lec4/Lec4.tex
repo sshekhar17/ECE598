@@ -145,9 +145,9 @@ D_f(P_{X} \parallel Q_X) \geq D_f(P_Y \parallel Q_Y), \qtext{where} P_Y = P_X P_
 
 \paragraph{Variational Formulation.} We have the following for convex and lower-semicontinuous $f$ and any function class $\calG$: 
 \begin{align}
-D_f(P\parallel Q) \geq \sup_{g \in \calG} \mathbb{E}_Q[g(Y)] - \mathbb{E}_P[f^*(g(X))], \qtext{where} f^*(y) = \sup_{x \in \mathbb{R}} \lp x y - f(x) \rp, 
+D_f(P\parallel Q) \geq \sup_{g \in \calG} \mathbb{E}_P[g(X)] - \mathbb{E}_Q[f^*(g(Y))], \qtext{where} f^*(y) = \sup_{x \in \mathbb{R}} \lp x y - f(x) \rp, 
 \end{align}
-with equality if and only if $ \partial(\ell) \cap  \mathcal{G} \not= \emptyset$, where $\ell = dP/dQ$. 
+with equality if and only if $ \partial f(\ell) \cap  \mathcal{G} \not= \emptyset$, where $\ell = dP/dQ$. 
 
 Following~\cite{nguyen2010estimating}, we proceed by observing that for convex lower-semicontinuous $f$, we have the following: 
 \begin{align}
