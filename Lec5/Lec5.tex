@@ -1,0 +1,317 @@
+\documentclass[12pt]{article}
+\usepackage[english]{babel}
+\usepackage[utf8x]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{../scribe}
+\usepackage{listings}
+
+\usepackage{hyperref}
+% \usepackage{cleveref}
+\usepackage{xcolor}
+\usepackage{natbib}
+\usepackage{tikz}
+\renewcommand{\arraystretch}{1.5}
+\usepackage{nicefrac}
+% \newcommand{\thetahat}{\widehat{\theta}}
+% \Scribe{Shubhanshu Shekhar}
+\Lecturer{Shubhanshu Shekhar}
+\LectureNumber{5}
+\LectureDate{September 9, 2025}
+\LectureTitle{Statistical Decision Theory}
+
+\lstset{style=mystyle}
+% \usepackage{tikz}
+\usepackage{comment}
+% \usepackage{pgfplots}
+% \usepackage{enumitem}
+\input{../preamble}
+\input{../newMacros}
+
+
+\begin{document}
+	\MakeScribeTop
+%#############################################################
+%#############################################################
+%#############################################################
+%#############################################################
+
+In this lecture, we will start our formal discussion of statistical inference problems. Since the eventual goal of statistical inference is often to aid decision-making, we will take a decision-theoretic approach to develop the formalism. In particular, we will introduce the notion of Loss functions~(or negative utility functions) to quantify the quality of our inference, which will then help us define some notions of optimal inference procedures. 
+
+This somewhat abstract formulation is useful as it allows us to analyze a large class of problems, such as  estimation, hypothesis testing, and stochastic optimization. In later lectures, we will expand this framework to allow for interactive and sequential decision-making~(bandits, RL, etc.). 
+
+\section{The general framework}
+\label{sec:decision-theoretic-framework}
+
+Throughout this section, we will assume that there is an underlying probability space, $(\Omega, \calF_\Omega, \bbP)$, large enough to contain all the random variables that arise in our discussion. To study the optimality of statistical inference procedures, we require the following components: 
+
+\begin{itemize}
+	\item \textbf{Statistical model or experiment.}  Let $\{P_\theta: \theta \in \Theta\}$ denote a family of probability distributions on some observation space $(\calX, \calF_\calX)$ indexed by a ``parameter space'' $(\Theta, \calF_\Theta)$ endowed with a ``\href{https://en.wikipedia.org/wiki/Metric_space#Pseudometrics}{pseudo-metric}'' $\rho:\Theta \times \Theta \to [0, \infty)$. By pseudo-metric, we mean that $\rho$ is symmetric, satisfies triangle inequality, and $\rho(\theta, \theta)=0$ for all $\theta \in \Theta$. That is, $\rho(\theta, \theta')=0$ does not necessarily imply that $\theta'=\theta$~(as it would if $\rho$ were a metric). 
+
+	\item \textbf{Observations.} Let $\X \sim P_\theta$ denote an $\calX$-valued observation drawn from the distribution corresponding to the unknown parameter $\theta$. In many important cases, we have $\calX = \otimes_{i=1}^n \calX_i$ for some spaces $\{\calX_i: 1 \leq i \leq n\}$, and $\X = (X_1, \ldots, X_n)$ denotes $n$ observations sampled according to the distribution $P_\theta$ on $\calX$.  This can be further specialized to the case of independent observations, when $P_\theta = \otimes_{i=1}^n p_{\theta, i}$. Finally, when $\calX_i = \calX$ and $p_{\theta, i} = p_\theta$ for all $i \in [n]$, then we reduce to the case of \iid observations. 
+
+
+	\item \textbf{Decision.} Let $(\calW, \calF_\calW)$ denote the ``decision space'', and let $\W \sim P_{\W|\X}$  denote the $\calW$-valued ``decision'' made by the statistician or data-analyst based on the observations $\X$. The stochastic kernel $P_{\W|\X}$ is referred to as the (randomized) ``decision rule'', and can be equivalently represented (in most problems) by a function $h(\X, U)$, where $h:\calX \times [0,1] \to \calW$, and $U \sim \mathrm{Uniform}([0,1])$ random variable independent of $\calX$.
+
+	\item \textbf{Loss Function.} For some loss function  $L:\calW \times \Theta \to \mathbb{R}$, the term $L(\W, \theta)$  assigns a numerical value to the quality of the decision $W$ when the true underlying parameter is $\theta$~(i.e., when $\X \sim P_\theta$). Throughout this course, we will assume that a loss function~(or a utility function) has already been specified for us, and not concern ourselves with the design of appropriate loss or utility functions for a given task. An axiomatic approach for the existence and design of utility functions lies under the field of \emph{Utility theory}; see for example,~\citet{bernardo2009bayesian}. 
+\end{itemize}
+
+Thus, there are three major \emph{spaces} under consideration: the \emph{parameter space} $(\Theta, \calF_\Theta)$, the \emph{decision space}~(also sometimes known as the action space) $(\calW, \calF_\calW)$, and the \emph{observation space} $(\calX, \calF_\calX)$. Our goal is to construct a possibly randomized decision rule; $P_{W|\X}$, which results in a small expected loss, also called the \emph{risk}: 
+\begin{align}
+	R(P_{W|\X}, \theta) & = \mathbb{E}_{(\X, W)}\lb L(W, \theta) \rb. 
+\end{align}
+
+\section{Examples} 
+\label{sec:examples}
+In this section, we will illustrate how the general framework introduced in the previous section models various tasks in statistics and machine learning. 
+
+\subsection{Estimation}
+\label{subsec:estimation}
+	The most important instance of the general decision problem discussed in~Section~\ref{sec:decision-theoretic-framework} is that of estimation. In this case, we have the following: 
+	\begin{itemize}
+		\item For simplicity, let us assume the case of \iid observations $\X = (X_1, \ldots, X_n)$. This corresponds to the case of $\calX = \calX_i^n$ and $\P_\theta =  P_\theta^{\otimes n}$. 
+		\item The decision space in this case is the parameter space $\Theta$ itself, and often we refer to the decision rule $P_{W|\X}$ with $\thetahat:\calX \times [0, 1] \to \Theta$~(the extra argument in the definition of $\thetahat$ is to allow for randomization if necessary). This mapping $\thetahat$ is referred to as the estimator. 
+		
+		\item The loss function often has the form $L(\thetahat, \theta) = \Phi \circ \rho(\thetahat, \theta)$, where recall that $\rho$ is the pseudo-metric on the parameter space $\Theta$, and $\Phi:[0, \infty) \to [0, \infty)$ is a non-decreasing function~(for example $\Phi(t) = t^2$). 
+	\end{itemize}
+	The risk associated with any estimator is defined as 
+	\begin{align}
+	R_n(\thetahat, \theta) = \mathbb{E}_{(\X, \thetahat)}[\Phi \circ \rho(\thetahat(\X), \theta)]. 
+	\end{align}
+	
+	\begin{example}
+		\label{example:estimation-GLM} Consider an estimation problem with $\Theta = \mathbb{R}$, $P_\theta = N(\theta, \sigma^2)$, data  $\X = (X_1, \ldots, X_n)  \stackrel{i.i.d.}{\sim}  N(\theta, \sigma^2)$. The decision space is also $\Theta$, and let $P_{W|\X}$ denote any estimator. The usual loss function is $L(\theta, w) = |\theta - w|^2$, which corresponds to $\rho(\theta, w) = |\theta-w|$ and $\Phi(t) = t^2$. 
+
+		A powerful estimator in this case is the maximum likelihood estimator (MLE), defined as 
+		\begin{align}
+		\thetahat(\X) \in \argmax_{w \in \Theta} \; \lp \frac{1}{2 \pi \sigma^2} \rp^{n/2} \exp \lp - \frac{1}{2 \sigma^2} \sum_{i=1}^n |X_i - w|^2 \rp
+		\end{align}
+		In this case, the MLE turns out to have the familiar form of the sample mean 
+		\begin{align}
+		\thetahat(\X) = \bar{\X}_n = \frac{1}{n} \sum_{i=1}^n X_i, \qtext{and} \mathbb{E}\lb |\thetahat(\X) - \theta|^2 \rb = \frac{\sigma^2}{n}. 
+		\end{align}
+	\end{example}
+
+	\begin{example}
+		\label{example:density-estimation} Consider a parameter space  for some $M>0$ and $\gamma \in (0, 1]$: 
+		\begin{align}
+		\Theta \equiv \Theta(M, \gamma) = \{ (M, \gamma) \text{ H\"older continuous densities on } [0,1] \}. 
+		\end{align}
+		Recall that a function is $(M, \gamma)$ H\"older continuous if $|f(x)- f(x')| \leq M |x-x'|^{\gamma}$. Now, for every $\theta \in \Theta(M, \gamma)$, let $P_\theta$ denote the distribution on $[0,1]$ with density $\theta$. Given $\X = (X_1, \ldots, X_n)$ \iid from some distribution $P_\theta$, our goal is to construct an estimate $\thetahat \in \calW$, where $\calW = \{\text{all densities on }[0,1]\}$. Let $\rho(\theta, \theta') = \int (\theta(x) - \theta'(x))^2 dx$, and $\Phi(t) = t$ be the identity function. 
+
+		In this case, a natural idea is to use the histogram estimator: partition the domain $[0,1]$ into $m$ equal intervals $I_1, \ldots, I_{m}$, with $I_j = [(j-1)/m, j/m]$, and define 
+		\begin{align}
+		\thetahat_n(x) = \sum_{j=1}^m m \hat{p}_j \boldsymbol{1}_{x \in I_j}, \qtext{where} \hat{p}_j = \frac{1}{n} \sum_{i=1}^n \boldsymbol{1}_{X_i \in I_j}. 
+		\end{align}
+		We can verify that the risk of this histogram estimator is equal to 
+		\begin{align}
+		R_n(\theta, \thetahat) \leq C_1m^{-2\gamma} + C_2\frac{m}{n}, 
+		\end{align}
+		which on balancing with $m \asymp n^{1/(2\gamma + 1)}$ gives us the rate $n^{-2\gamma/(2\gamma + 1)}$.  In the next week's lectures we will see that this rate cannot be improved. 
+	\end{example}
+
+\subsection{Hypothesis Testing}
+	Another important instance of the general decision problem is that of  (binary) hypothesis testing. In this case, we have the following: 
+	\begin{itemize}
+		\item \iid observations $\X = (X_1, \ldots, X_n)$ corresponding to $\calX = \bbX^n$ and $\P_\theta =  P_\theta^{\otimes n}$. 
+		\item For two disjoint subsets $\Theta_0, \Theta_1$ of the parameter space $\Theta$, the goal is to decide whether the true parameter lies in $\Theta_0$ or $\Theta_1$. Hence, the  decision space in this case  is $\calW = \{0, 1\}$. 
+
+		\item A possibly randomized hypothesis test corresponds to a kernel $P_{W|\X}$, which can be represented by a map $\Psi: \calX \to [0,1]$, with $\Psi(\bx) = \mathbb{P}(W=1|\X=\bx)$. A deterministic hypothesis test maps $\calX$ to $\calW=\{0,1\}$. 
+		
+		
+		\item One possible way of designing a loss function is of the form 
+		\begin{align}
+			L(\theta, w) = c_{ij} \qtext{if} \theta \in \Theta_i, \; w \in \Theta_j, \; \text{for } i,j \in \{0,1\}. 
+		\end{align}
+	\end{itemize}
+	
+	\begin{example}
+		\label{example:hypothesis-testing-GLM} With the same setting as~Example~\ref{example:bayes-optimal-mean-estimation}, let us consider the case of $\Theta_0= \{0\}$ and $\Theta_1 = \Theta \setminus \{0\}$ (a two-sided test). 
+
+		A natural (likelihood based) test for this problem is 
+		\begin{align}
+			\Psi(\X) = \begin{cases}
+			1 & \text{if }\; \frac{\sqrt{n}|\bar{\X}_n|}{\sigma} > t,  \\
+			0 & \text{if }\; \frac{\sqrt{n}|\bar{\X}_n|}{\sigma} \leq t. 
+			\end{cases}
+		\end{align}
+		for an appropriate threshold $t$. 
+	\end{example}
+
+	We now go to a simple nonparametric testing problem. 
+	\begin{example}
+		\label{example:two-sample-testing}
+		Suppose we have a data $\{(U_i, V_i): 1 \leq i \leq n\}$ drawn \iid from a joint distribution $P_U \times P_V$, with both $P_U, P_V$ supported on the real line $\mathbb{R}$. Consider the hypotheses 
+		\begin{align}
+		H_0: P_U = P_V, \qtext{versus} H_1: P_U \neq P_V. 
+		\end{align}
+		Here $\Theta = \calP \times \calP$, where $\calP \equiv \calP(\mathbb{R})$ is the space of all distributions on $\mathbb{R}$; $\Theta_0 = \{(P, P): P \in \calP\}$ and $\Theta_1 = \Theta \setminus \Theta_0$.
+
+		In this case, we cannot use likelihood based tests~(there is no common dominating measure for the distribution classes involved to define the family of likelihood ratios). A natural idea is to use the data to estimate the distance between the two distributions, and  reject the null if the empirical distance is large. In this case, 
+		\begin{align}
+			D_{n} = \sup_{x \in  \mathbb{R}} | \hat{F}_{n,U}(x) - \hat{F}_{n, V}(x)|, 
+		\end{align}
+		where $\hat{F}_{n, U}, \hat{F}_{n, V}$ denote the empirical CDFs. Then, we can define a hypothesis test 
+		\begin{align}
+		\Psi(\X) = 
+			\begin{cases}
+				1, \text{ if } D_n > t, \\	
+				0, \text{ if } D_n \leq t.
+			\end{cases}
+		\end{align}
+		The threshold can be selected either by permutations or via the limiting Kolmogorov distribution. 
+	\end{example}
+
+\subsection{Binary Classification}
+We now discuss how the framework can be used to study the classical machine learning task of binary classification. 
+\begin{itemize}
+	\item In this case, our observation space is $\calX = \otimes_{i=1}^n \lp \bbZ \times \{0, 1\}\rp$, and we have $n$ i.i.d. feature-label pairs denoted by $\X = \{(Z_i, Y_i): 1 \leq i \leq n\}$.  Each distribution $\P_\theta = (P_{\theta, ZY})^{\otimes n} = (P_{\theta, Z} P_{\theta, Y|Z})^{\otimes n}$. 
+	
+	\item The decision space is some family of binary classifiers $\calW = \{w:\bbZ \to \{0,1\}\}$, and the decision rule is represented by some, potentially randomized, binary classifier $\P_{W|\X}$. 
+
+	\item The loss function $L:\calW \times \Theta \to \mathbb{R}$ is the expected value of some classification error $\phi: \calW \times \bbZ \times \{0, 1\} \to \mathbb{R}$:
+	\begin{align}
+		L(w, \theta) = \mathbb{E}_{P_{\theta, ZY}}[\phi(w, Z, Y)], \qtext{where} (Z,Y) \perp \X.  
+	\end{align}
+	For example, the $0$-$1$ loss corresponds to $\phi(w, z, y) = \boldsymbol{1}_{w(z)  \neq y}$. 
+
+\end{itemize}
+	Then, the risk associated with a learning algorithm $\P_{W|\X}$ is equal to 
+	\begin{align}
+	R_n(\P_{W|\X}, \theta) = \mathbb{E}_{\X \sim (P_{\theta, ZY})^{\otimes n} }[ \mathbb{E}_{\P_{W|\X}}[ L(W, \theta) \mid \X] ].  
+	\end{align}
+
+	In practice, a popular method of constructing classifiers is via empirical risk minimization or ERM procedures, that set  $\P_{W|\X} = \delta_{\hat{W}(\X)}$, where 
+	\begin{align}
+	\hat{W}(\X) \in \argmin_{w \in \calW} \; \frac{1}{n} \sum_{i=1}^n \phi(w, Z_i, Y_i). 
+	\end{align}
+
+\section{Notions of Optimality}
+
+If our goal is to identify {optimal} decision rules, the above definition of risk presents a problem. In most cases, the risk curves of any two decision rules, $P_{\W|\X}$ and $Q_{\W|\X}$ are not comparable; that is, there may be regions in $\Theta$ where $R_n(P_{W|\X}, \theta) > R_n(Q_{W|\X}, \theta)$, and there may be other regions where the strict inequality is reversed. The best we can hope to do is to discard inadmissible decision rules: $Q_{W|\X}$ is said to be inadmissible  if there exists a $P_{W|\X}$ such that $R_n(Q_{W|\X}, \theta) \geq R_n(P_{W|\X}, \theta)$ for all $\theta \in \Theta$, and the inequality is strict for at least one $\theta$. 
+
+Thus, in order to compare different decision rules and find the optimal one among them, we need to develop methods of assigning numerical values that represent the quality of the decision rules. There are two common ways of doing this: the average-case or \emph{Bayesian} approach, and the worst-case or \emph{minimax} approach.
+
+
+
+\subsection{Bayesian Framework}
+In the Bayesian setting, we consider the parameter $\theta$ itself as a random variable, which we denote by the bold symbol $\boldsymbol{\theta}$ drawn according to a \emph{prior distribution} $\pi$ defined on the measurable space $(\Theta, \calF_\Theta)$.  Then, we have the Markov chain: 
+\begin{align}
+	\boldsymbol{\theta} \sim \pi \stackrel{P_{\X|\boldsymbol{\theta}}}{\longrightarrow} \X \sim  \stackrel{P_{W|\X}}{\longrightarrow} W. 
+\end{align}
+Thus, for any decision rule $P_{W|\X}$ and prior $\pi$, we have the following Bayesian risk: 
+\begin{align}
+	R_n\lp P_{W|\X}, \pi \rp & = \mathbb{E}_{(\boldsymbol{\theta}, \X, W)} \lb L(W, \boldsymbol{\theta}) \rb = \mathbb{E}_{\boldsymbol{\theta}} \lb R_n(P_{W|\X}, \boldsymbol{\theta}) \rb.  
+\end{align}
+Thus, we now have a numerical value, called the Bayes Risk, associated with each decision rule, $P_{W|\X}$, and we can define a natural notion of the Bayes optimal decision rule as 
+\begin{align}
+	 P^{*}_{W|\X}(\pi) \in \argmin_{P_{W|\X}} \; R_n\lp P_{W|\X}, \pi \rp. 
+\end{align}
+The decision rule $P^*_{W|X}(\pi)$ is referred to as the Bayes optimal decision rule, and our next two results characterize it. 
+%% Lemma: deterministic bayes optimal
+\begin{lemma}
+	\label{lemma:bayes-deterministic} For every $P_{W|\X}$ there exists a deterministic decision rule $h:\calX \to \calW$ such that $R_n(P_{W|\X}, \pi) \geq R_n(h, \pi)$. In other words, we can restrict our attention to deterministic decision rules without loss of optimality. 
+\end{lemma}
+
+\begin{proof}
+
+	[We will not focus on any measurability issues in this proof.]
+Recall that the Bayes risk of a procedure $P_{W|\X}$ is defined as 
+\begin{align}
+	R_n(P_{W|\X}, \pi) = \mathbb{E}_{(\boldsymbol{\theta}, \X, W)}\lb  L(W, \boldsymbol{\theta})\rb.  
+\end{align}
+Since $\boldsymbol{\theta} \longrightarrow \X \longrightarrow W$ form a Markov chain, we know that $\bbP_{(\theta, \X, W)} = \bbP_X \bbP_{W|\X} \bbP_{\boldsymbol{\theta}|\X}$, hence we have the following: 
+\begin{align}
+R_n(P_{W|\X}, \pi) = \mathbb{E}_{\X}\lb \mathbb{E}_{W|\X} \lb \mathbb{E}_{\boldsymbol{\theta}|\X} \lb  L(W, \boldsymbol{\theta}) \mid \X\rb  \mid \X\rb\rb. 
+\end{align}
+Let $\ell(X, W)$ denote the conditional expectation $\mathbb{E}_{\boldsymbol{\theta}|\X} \lb  L(W, \boldsymbol{\theta}) \mid \X\rb$, and define for any $x \in \calX$, 
+\begin{align}
+h(x) \in \argmin_{w \in \calW} \ell(w, x), \quad \implies \quad 
+\ell(X, W) \; \stackrel{a.s.}{\geq} \ell(\X, h(\X)). 
+\end{align}
+Thus, we have 
+\begin{align}
+R_n(P_{W|\X}, \pi) = \mathbb{E}_{\X}\lb \mathbb{E}_{W|\X}\lb \ell(\X, W) \mid \X\rb \rb \geq \mathbb{E}_{\X}\lb \ell(\X, h(\X)) \rb =  R_n(h, \pi). 
+\end{align}
+
+For any fixed $(\boldsymbol{\theta}, \X) = (\theta, \bx)$,  we have 
+\begin{align}
+	\mathbb{E}_{W}\lb L(W, \boldsymbol{\theta}) \mid \X, \boldsymbol{\theta}\rb \geq \inf_{w \in \calW} L(w, \boldsymbol{\theta}). 
+\end{align}
+This completes the proof. 
+\end{proof}
+As an immediate corollary of the proof, we can obtain a complete characterization of a deterministic Bayes optimal decision rule. 
+\begin{corollary}
+\label{corollary:bayes-optimal-rule}
+A Bayes optimal decision rule is the one that minizes the average loss conditioned on the data: 
+\begin{align}
+h^*_B(X) \in \argmin_{w \in \calW} \mathbb{E}_{\boldsymbol{\theta}|\X} \lb L(\boldsymbol{\theta}, w) \mid \X \rb. 
+\end{align}
+\end{corollary}
+This optimal procedure has a nice interpretation: $\pi$ denotes our ``prior'' belief over the parameter space, and the kernel $\bbP_{\boldsymbol{\theta}|\X}$ denotes our ``posterior'' belief over the parameter space after observing the data. Then the Bayes optimal decision rule is to observe the data, update our posterior belief, and take the action that minimizes the expected loss according to our updated posterior. 
+
+\begin{example}
+\label{example:bayes-optimal-mean-estimation} Consider the mean estimation problem of $\Theta = \mathbb{R}$, $P_\theta = N(\theta, \sigma^2)$. Let $\pi$ denote a prior over the parameter space. Then, given $\X|\boldsymbol{\theta} \sim P_{\theta}^{\otimes n}$, the Bayes optimal estimator of the mean under quadratic loss $L(\theta, w)= |\theta - w|^2$ is 
+\begin{align}
+	h^*_B(\X) &\in \argmin_{w \in \Theta} \mathbb{E}_{\boldsymbol{\theta}|\X}\lb |\boldsymbol{\theta} - w|^2 \mid \X \rb \\ 
+	&= \argmin_{w \in \Theta} \mathbb{E}_{\boldsymbol{\theta} \mid \X}\lb \lp |\boldsymbol{\theta} - \mathbb{E}[\boldsymbol{\theta} \mid \X]|^2 + |\mathbb{E}[\boldsymbol{\theta} \mid \X] - w|^2  \rp \mid \X\rb \\
+	& =  \argmin_{w \in \Theta} \lp \mathrm{Var}\lp \boldsymbol{\theta} \mid \X \rp +  \left\lvert \mathbb{E}[\boldsymbol{\theta}|\X] - w \right\rvert^2  \rp
+\end{align}
+Since only the second term depends on $w$, it follows that the Bayes optimal estimator is $\mathbb{E}[\boldsymbol{\theta}\mid \X]$; the posterior mean of $\boldsymbol{\theta}$ given the data $\X$. 
+
+Furthermore, the Bayes optimal risk is equal to the expected value of the conditional posterior variance: 
+\begin{align}
+R_n(h^*_B, \pi) = \mathbb{E}_{\X}\lb \mathrm{Var}\lp \boldsymbol{\theta} \mid \X \rp \rb. 
+\end{align}
+% 
+\end{example}
+
+The main criticism of the above approach is the reliance on the prior distribution $\pi$: two decision-makers may prefer different priors, $\pi_1$ and $\pi_2$, which in turn would lead them to two different ``optimal'' decision rules. Apriori, there is no way of distinguishing between them. 
+
+\subsection{Minimax Framework}
+One important alternative to the Bayesian approach is to take a more pessimistic or worst-case view of the world, and design procedures that minimize the following worst-case risk called the minimax-risk: 
+\begin{align}
+	R_n\lp P_{W|\X}, \Theta \rp & = \sup_{\theta \in \Theta} \mathbb{E}_{(\X, W)}\lb L(W, \theta) \rb. 
+\end{align}
+Again by restricting our attention to the worst-case performance of a decision rule, we have obtained a way of assigning a numerical value of performance to each such decision rule. This naturally leads us to the definition of the \emph{minimax optimal} decision rule: 
+\begin{align}
+	P^{*, M}_{W|\X} \equiv P^{*, M}_{W|\X}(\Theta) \equiv \argmin_{P_{W|\X}} R_n(P_{W|\X}, \Theta), \qtext{with minimax value} R^*_n(\Theta) = \inf_{P_{W|\X}} \sup_{\theta \in \Theta} R_n(P_{W|\X}, \theta). 
+\end{align}
+In general, finding the exact minimax optimal decision procedure is not feasible, and we often aim to identify either asymptotically minimax optimal procedures. In most practical cases, even that is not possible, and we restrict our attention to minimax rate-optimal procedures. 
+\begin{itemize}
+\item A procedure $P_{W|\X}$ is said to be asymptotically minimax optimal if 
+\begin{align}
+	\lim_{n \to \infty} \frac{R_n(P_{W|\X}, \Theta)}{R_n^*(\Theta)} = 1. 
+\end{align}
+\item For a positive sequence $\{\psi_n: n \geq 1\}$ is called the minimax rate if 
+\begin{align}
+-\infty < \liminf_{n \to \infty} \frac{R_n^*(\Theta)}{\psi_n} \leq \limsup_{n \to \infty} \frac{R_n^*(\Theta)}{\psi_n} < \infty. 
+\end{align}
+In practice, we establish rate optimality of procedures by first showing that the minimax risk of a procedure satisfies $R_n(P_{W|\X}, \Theta) \leq C \psi_n$ for some rate $\psi_n$, and then show an impossibility result that any procedure $Q_{W|\X}$ must suffer a minimax risk of at least $c \psi_n$.  
+\end{itemize}
+
+
+Unlike the Bayes optimal procedure, the minimax optimal decision rule  requires randomization in general. 
+
+\paragraph{Duality between Bayesian and Minimax Frameworks.} An immediate consequence of the definitions is that 
+\begin{align}
+	R_n(P_{W|\X}, \pi) &= \int_{\Theta} R_n(P_{W|\X}, \theta) d\pi(\theta) \leq \int_{\Theta} \lp \sup_{\theta \in \Theta} R_n(P_{W|\X}, \theta)\rp d\pi(\theta) \\ 
+	& \int_{\Theta} R_n(P_{W|\X}, \Theta) d\pi(\theta) = R_n(P_{W|\X}, \Theta). \label{eq:bayes-vs-minimax-1}
+\end{align}
+Note that here we have used the assumption that $\pi$ is a probability measure on $(\Theta, \calF_\Theta)$, and not an \href{https://en.wikipedia.org/wiki/Prior_probability#Improper_priors}{improper prior}. Now, observe that~\eqref{eq:bayes-vs-minimax-1} immediately implies that 
+\begin{align}
+	\sup_{\pi \in \mathcal{P}(\Theta, \calF_\Theta)} R_n(P_{W|\X}, \pi) \leq R_n(P_{W|\X}, \Theta). \label{eq:bayes-vs-minimax-2} 
+\end{align}
+If the supremum above is achieved at some prior $\pi^*$, then this prior is referred to as the \emph{least favorable prior}. 
+This inequality is essentially the same as the notion of \emph{weak duality} in optimization, and in analogy with optimization, under certain regularity conditions, we have the following \emph{strong duality} condition: 
+\begin{align}
+	R_n^*(\Theta) = \inf_{P_{W|\X}} \sup_{\theta} R_n(P_{W|\X}, \theta) =  \inf_{P_{W|\X}} \sup_{\pi \in \calP(\theta)} R_n(P_{W|\X}, \pi)  = \sup_{\pi} \inf_{P_{W|\X}} R_n(P_{W|\X}, \pi). 
+\end{align}
+The last inequality can be justified via a minimax theorem under certain regularity conditions. 
+
+
+% \newpage
+\bibliographystyle{abbrvnat}           % if you need a bibliography
+\bibliography{../ref}                % assuming yours is named ref.bib
+
+
+\end{document}
