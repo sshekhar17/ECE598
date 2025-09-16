@@ -1,0 +1,316 @@
+\documentclass[12pt]{article}
+\usepackage[english]{babel}
+\usepackage[utf8x]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{../scribe}
+\usepackage{listings}
+
+\usepackage{hyperref}
+% \usepackage{cleveref}
+\usepackage{xcolor}
+\usepackage{natbib}
+\usepackage{tikz}
+\renewcommand{\arraystretch}{1.5}
+\usepackage{nicefrac}
+% \newcommand{\thetahat}{\widehat{\theta}}
+% \Scribe{Shubhanshu Shekhar}
+\Lecturer{Shubhanshu Shekhar}
+\LectureNumber{6}
+\LectureDate{16th September, 2025}
+\LectureTitle{Minimax Lower Bounds Part I}
+
+\lstset{style=mystyle}
+% \usepackage{tikz}
+\usepackage{comment}
+% \usepackage{pgfplots}
+% \usepackage{enumitem}
+\input{../preamble}
+\input{../newMacros}
+
+
+\begin{document}
+	\MakeScribeTop
+%#############################################################
+%#############################################################
+%#############################################################
+%#############################################################
+
+We now begin our discussion of a collection of techniques for deriving fundamental lower bounds~(i.e., converse results) on the minimax risk in statistical estimation problems. In this lecture, we present the first step which is common in most of the techniques, that involves reducing the problem of estimation to that of testing. Then, we introduce an approach based on binary hypothesis testing: a conceptually simple approach, that nevertheless, can be used to establish the (order) optimal  minimax rates in several problems that we also discuss. 
+
+\section{From Estimation to Testing}
+\label{sec:reduction-to-testing}
+
+Recall our general formulation of \emph{statistical decision theory}: 
+\begin{itemize}
+	\item Let $\{P_\theta: \theta \in \Theta\}$ denote a family of probability distributions on some observations space $(\calX, \calF)$ indexed by a ``parameter set'' $\Theta$ endowed with a ``pseudo-metric'' $\rho:\Theta \times \Theta \to [0, \infty)$. Recall that by pseudo-metric, we mean that $\rho$ is symmetric, satisfies triangle inequality, and $\rho(\theta, \theta)=0$ for all $\theta \in \Theta$. 
+
+	\item Let $\X \sim P_\theta$ denote an $\calX$-valued observation drawn from the distribution corresponding to the unknown parameter $\theta$. In most cases of interest, we have $\calX = \bbX^n$ for some space $\bbX$, and $\X = (X_1, \ldots, X_n)$ denotes $n$ observations. 
+
+	\item Let $(\calW, \calF_\calW)$ denote the ``decision space'', and let $W \sim P_{W|\X}$  denote the $\calW$-valued ``decision'' made by the statistician based on the observations $\X \equiv (X_1, \ldots, X_n)$. In most cases, we will consider $\calW = \Theta$, in which case the decision rule $\thetahat$ is called an ``estimator''. In the sequel, we will overload the notation $\thetahat$ to represent both the estimate, $\thetahat(\x)$ when $\X=\x$, and the stochastic kernel $P_{W|\X}$. 
+
+	\item To measure the quality of an estimator, we use a loss function $L(\theta, \theta') = \Phi \circ \rho(\theta, \theta')$ where $\Phi:[0,\infty) \to [0,\infty)$ is a non-decreasing function. This loss function can then be used to define the minimax risk, as 
+	\begin{align}
+		R_n^*(\Theta, \Phi\circ \rho) =\inf_{\thetahat} \sup_{\theta \in \Theta} \mathbb{E}_{\X \sim P_\theta} \lb L(\thetahat(X), \theta) \rb =\inf_{\thetahat} \sup_{\theta \in \Theta} \mathbb{E}_{\X \sim P_\theta} \lb \Phi \circ \rho(\thetahat(X), \theta) \rb. 
+	\end{align}
+\end{itemize}
+In practice, for most problems that we encounter, it will be difficult to exactly characterize the value of the minimax risk. Instead, the best we can hope to achieve is to establish the \emph{minimax rate}; that is, how does the term $R_n^*(\Theta, \Phi \circ \rho)$ behave as a function of the ``size of the problem'', modulo constant terms. 
+
+In many problem instances, the observation $\X$ consists of $n$ \iid observations; that is, $\X = (Y_1, \ldots, Y_n) \simiid P_\theta$, with each $\calX = \calY^n$. In such instances, we say that the minimax rate is $\psi_n$, if the following is true: 
+\begin{align}
+c \leq \liminf_{n \to \infty} \frac{\calR(n, \Theta, \Phi\circ \rho)}{\psi_n} \leq \limsup_{n \to \infty} \frac{\calR(n, \Theta, \Phi\circ \rho)}{\psi_n} \leq C, 
+\end{align}
+for constants $0<c\leq C<\infty$. 
+
+If we want to prove that an estimator $\thetahat$ is \blue{asymptotically rate-optimal}, then we need to establish two statements: 
+\begin{itemize}
+	\item First, we need an \emph{achievability} statement which says that there exists a constant $C$ such that 
+	\begin{align}
+		\limsup_{n \to \infty} \frac{\sup_{\theta \in \Theta} \mathbb{E}_{\theta}\lb \Phi\circ \rho(\thetahat(\X), \theta) \rb}{\psi_n} \leq C < \infty. 
+	\end{align}
+	\item We also need a \emph{converse} statement, which says that there exists a constant $c>0$, such that 
+	\begin{align}
+		\liminf_{n \to \infty} \frac{\calR(n, \Theta, \Phi\circ \rho)}{\psi_n} \geq c. \label{eq:converse-statement-1}
+	\end{align}
+\end{itemize} 
+If $c=C$, then such an estimator $\thetahat$ is said to be \blue{asymptotically efficient}. Information theoretic techniques play a key role in establishing the converse bounds such as~\eqref{eq:converse-statement-1}. A common first step in such analysis is to reduce the problem of estimation to that of testing, as we formalize in the statement below. 
+
+\begin{proposition}
+\label{prop:reduction-to-testing} For some integer $M \geq 2$, let $\Theta_M = \{\theta_1, \ldots, \theta_M\}$ denote a finite subset of $\Theta$. Then, the minimax risk associated with $(\Theta, L)$ with $L = \Phi \circ \rho$ satisfies 
+\begin{align}
+\calR\lp \Theta, L \rp \geq \blue{\omega(\Theta_M)} \red{\inf_{\Psi:\calX \to \Theta_M} \lp \frac{1}{M} \sum_{i=1}^M \mathbb{P}_{\theta_i}\lp \Psi(\X) \neq \theta_i \rp \rp}, 
+\end{align}
+where $\omega(\Theta_M) = \min_{\theta_i \neq \theta_j} L(\theta_i, \theta_j)/2 = \min_{\theta_i \neq \theta_j} \Phi \circ \rho(\theta_i, \theta_j)/2$. 
+\end{proposition}
+\begin{remark}
+	\label{remark:reduction-to-testing} Observe that the \blue{first term} $\omega(\Theta_M)$ depends on how ``well-separated'' the points in the set $\Theta_M$ are. In other words, for a fixed integer $M \geq 2$, the ``best'' choice of $\Theta_M$ should be one which is as widely-spaced as possible in the metric $\rho$. 
+
+	The \red{second term} in the lower bound is simply the average probability of error in the $M$-ary hypothesis testing problem involving the parameters in the set $\Theta_M$. To make this quantity large,  we need the distributions $\{P_{\theta_i}: \theta_i \in \Theta_M\}$ to be ``statistically indistinguishable'' given  $\X$. 
+
+	These two requirements are contradictory to each other, and the best lower bounds are obtained by finding $\Theta_M$ that achieve the best trade-off between these terms. 
+\end{remark}
+
+\emph{\textbf{Proof of Proposition~\ref{prop:reduction-to-testing}.}} Since $\Theta_M \subset\Theta$, we immediately have 
+\begin{align}
+R_n^*(\Theta, L) = \inf_{\thetahat} \sup_{\theta \in \Theta} \mathbb{E}_\theta\lb L(\thetahat, \theta) \rb \geq \inf_{\thetahat} \sup_{\theta \in \blue{\Theta_M}} \mathbb{E}_\theta\lb L(\thetahat, \theta) \rb. 
+\end{align}
+Let us define the minimum-distance estimator $\widehat{\Psi}(\X) = \argmin_{\theta' \in \Theta_M} \rho(\thetahat(X), \theta')$, which selects the element of $\Theta_M$ that is closest to the estimate $\thetahat(X)$ in $\rho$. Now consider the case of $\theta=\theta_i$, observe that 
+\begin{align}
+L(\thetahat(X), \theta_i) \geq \boldsymbol{1}_{\widehat{\Psi}(\X) \neq \theta_i} L(\thetahat(X), \theta_i) \geq \boldsymbol{1}_{\widehat{\Psi}(\X) \neq \theta_i} \omega(\Theta_M). \label{eq:reduction-to-testing-proof-1}
+\end{align}
+The last inequality follows from the fact that when $\widehat{\Psi}(\X) \neq \theta_i$, then there must exist a $\theta_j \in \Theta_M$, such that $\rho(\thetahat(\X), \theta_j) \leq \rho(\thetahat(\X), \theta_i)$, which in turn means that $\rho(\thetahat(\X), \theta_i) \geq (1/2) \rho(\theta_j, \theta_i)$. Or in other words, under this event, we have $L(\thetahat(\X), \theta_i) \geq L(\theta_j, \theta_i)/2$, and the inequality follows by the definition of $\omega(\Theta_M) = \min_{\theta', \theta'' \in \Theta_M} L(\theta', \theta'')/2$. 
+
+On taking expectation in~\eqref{eq:reduction-to-testing-proof-1}, we get 
+\begin{align}
+\max_{\theta\in \Theta_M} \mathbb{E}_\theta \lb L(\thetahat(\X), \theta) \rb \geq \omega(\Theta_M) \max_{\theta \in \Theta_M}\mathbb{P}_\theta \lp \widehat{\Psi}(\X) \neq \theta \rp \geq \omega(\Theta_M) \frac{1}{M} \sum_{\theta \in \Theta_M}\mathbb{P}_\theta \lp \widehat{\Psi}(\X) \neq \theta \rp, 
+\end{align}
+where the last inequality simply lower-bounds the maximum with an average. 
+
+Let us denote by $p_M(\widehat{\Psi})$ the average probability of error of the estimator $\Psi$. Observe that $p_M$ is simply the Bayesian probability of error of the $M$-ary hypothesis test $\widehat{\Psi}$. By design, each estimator $\thetahat$  is associated with such a minimum-distance hypothesis test. Hence, we have 
+\begin{align}
+\inf_{\thetahat} \max_{\theta \in \Theta_M} \mathbb{E}_\theta \lb L(\thetahat(\X), \theta) \rb \; \geq \; \omega(\Theta_M)\, \inf_{\widehat{\Psi} \equiv \widehat{\Psi}(\thetahat)} p_M(\widehat{\Psi}) \geq \omega(\Theta_M)\, \inf_{\Psi:\calX \to \Theta_M} p_M(\Psi). 
+\end{align}
+There is a subtle fact involved in achieving the last inequality: if $\thetahat$ is a randomized estimator, then the corresponding minimum-distance hypothesis test $\widehat{\Psi}$ will be a randomized hypothesis test; that is $\widehat{\Psi}: \calX \to \calP(\Theta_M)$. However, in the final lower bound we have only restricted our attention to non-randomized tests $\Psi:\calX \to \Theta_M$. The reason for this is that $p_M$ is the Bayesian probability of error~(with uniform prior), and it is known that randomization is not necessary for Bayesian hypothesis testing. In other words, there exists a non-randomized test $\Psi^*$ that achieves the lowest average probability of error among all (randomized or non-randomized) tests. 
+\hfill\qedsymbol
+
+\section{Two-Point Method and Variants}
+\label{sec:two-point-method}
+
+\begin{theorem}[Le-Cam's Two-Point Method]
+	\label{theorem:Le-Cams-method} Suppose $\Theta_2 \subset \Theta$ of size $2$, and $\omega(\Theta_2) = L(\theta_1, \theta_2)/2$. We have the following lower bounds on the minimax risk, : 
+	\begin{align}
+	\calR(\Theta, L) & \geq {\omega(\Theta_2)} \lp 1 - TV(P_{\theta_1}, P_{\theta_2})\rp \label{eq:le-cam-tv}  \\
+	\calR(\Theta, L) & \geq {\omega(\Theta_2)} \max \lp 1 - \sqrt{ \dkl(P_{\theta_1} \parallel P_{\theta_2})/2}, \, (1/2)\exp \lp - \dkl (P_{\theta_1} \parallel P_{\theta_2})\rp  \rp \label{eq:le-cam-kl} \\
+	\calR(\Theta, L) & \geq {\omega(\Theta_2)} \lp 1 - \sqrt{H^2(P_{\theta_1}, P_{\theta_2})(1-H^2(P_{\theta_1}, P_{\theta_2})/4)}\rp \label{eq:le-cam-hellinger}  \\
+	\calR(\Theta, L) & \geq {\omega(\Theta_2)} \max \lp 1 - \sqrt{ \chi^2(P_{\theta_1} \parallel P_{\theta_2})/2}, \, (1/2)\exp \lp - \chi^2 (P_{\theta_1} \parallel P_{\theta_2})\rp  \rp \label{eq:le-cam-chi-squared}
+	\end{align}
+\end{theorem}
+
+\emph{Proof of~Lemma~\ref{theorem:Le-Cams-method}.} 
+We only need to prove the first inequality given in~\eqref{eq:le-cam-tv}; the other follow directly by the inequalities between $TV$ and other $f$-divergences that we had derived in a previous lecture. 
+
+The inequality~\eqref{eq:le-cam-tv} essentially is a direct consequence of~Proposition~\ref{prop:reduction-to-testing}, which implies that 
+\begin{align}
+R_n^*(\Theta, L) \geq {\omega(\Theta_2)} \, \inf_{\Psi:\calX \to \Theta_2} \lp \mathbb{P}_{\theta_1}(\Psi(X) \neq \theta_1) + \mathbb{P}_{\theta_2}(\Psi(X) \neq \theta_2) \rp. 
+\end{align}
+Now, to each deterministic binary hypothesis test, we can associate a set $E = \{\Psi(\X) = \theta_1\}$, which implies that 
+\begin{align}
+R_n^*(\Theta, L) &\geq {\omega(\Theta_2)} \, \inf_{E} \lp \mathbb{P}_{\theta_1}(E^c) + \mathbb{P}_{\theta_2}(E) \rp = {\omega(\Theta_2)} \,\lp 1 -    \sup_{E} \lp  \mathbb{P}_{\theta_2}(E) - \mathbb{P}_{\theta_1}(E) \rp \rp \\ 
+& = {\omega(\Theta_2)} \lp 1 - TV(P_{\theta_1}, P_{\theta_2}) \rp. 
+\end{align}
+This completes the proof. 
+\hfill \qedsymbol
+
+Note that the lower bound~\eqref{eq:le-cam-tv} is a product of two terms: 
+\begin{itemize}
+	\item The first term, $\omega(\Theta_2) = \Phi \circ \rho(\theta_1, \theta_2)$, is measure of separation between the two elements in $\Theta_2$. To make this term larger, we need to select $\theta_1, \theta_2$, that are far from each other in $\rho$~(since $\Phi$ is non-decreasing). 
+
+	\item The other term $1 - TV(P_{\theta_1}, P_{\theta_2})$ is a measure of closeness between $P_{\theta_1}$ and $P_{\theta_2}$: to make this term larger, we need to bring the two distributions close to each other in TV distance. 
+\end{itemize}
+Thus, to get the tightest lower bound we need to find the right balance between these two terms: often this is achieved by maximizing $\Phi \circ \rho(\theta_1, \theta_2)$, subject to the constraint that $TV(P_{\theta_1}, P_{\theta_2}) \leq 1/2$~(or any other constant less than $1$); that is, 
+\begin{align}
+R_n^*(\Theta, L) = R_n^*(\Theta, \Phi \circ \rho) \geq \frac{1}{4} \; \sup_{\theta_1, \theta_2: TV(P_{\theta_1}, P_{\theta_2}) \leq 1/2} \; \Phi \circ \rho(\theta_1, \theta_2).   \label{eq:le-cam-tv-2}
+\end{align} 
+This bound is often more convenient to handle. 
+
+
+\section{Applications of the Two-Point Method}
+\label{sec:applications-of-two-point-method}
+In this section, we illustrate the application of LeCam's method for deriving minimax lower bounds for proving the rate-optimality of the MLE for GLM parameter estimation in $d=1$, and for the rate-optimality of the popular Upper Confidence Bound~(UCB) algorithm for $K$-armed bandits. 
+\subsection{Gaussian Location Model}
+\label{subsec:gaussian-location-model}
+
+Consider the following problem instance: 
+\begin{itemize}
+	\item $\X = (Y_1, \ldots, Y_n) \simiid N(\theta, \sigma^2)$, where $\theta \in \Theta = \mathbb{R}$ endowed with the metric $\rho(\theta, \theta') = |\theta - \theta'|$. 
+	\item The goal is to estimate the unknown mean (with known variance $\sigma^2$), under squared loss function; that is, $L(\theta, \theta') = |\theta - \theta'|^2$~(that is, $\Phi(t) = t^2$). 
+\end{itemize}
+We know that the maximum likelihood estimate~(MLE) in this case is defined as 
+\begin{align}
+\thetahat = \frac{1}{n} \sum_{i=1}^n Y_i = \frac 1 n \X^T \boldsymbol{1}_n, \qtext{where} \boldsymbol{1}_n = (1, \ldots, 1)^T \in \mathbb{R}^n. 
+\end{align}
+For this estimator, the expected risk is equal to 
+\begin{align}
+\mathbb{E}_\theta\lb L(\thetahat, \theta) \rb = \mathbb{E}_\theta \lb \lp \frac{1}{n} \sum_{i=1}^n (Y_i - \theta) \rp^2 \rb = \frac{\sigma^2}{n}. 
+\end{align}
+
+Now, let us prove that this estimator is minimax rate optimal. To do this, we consider $\Theta_2 = \{0, \Delta\}$ for some value $\Delta$ that we will specify later. Observe that $\omega(\Theta_2) = L(0, \Delta) = \Delta^2$. Since $P_{\theta} = p_{\theta}^{n}$ with $p_\theta \sim N(\theta, \sigma^2)$, we will use the lower bound that depends on relative entropy~(since it is easy to evaluate for product measures, and especially for products of Gaussians). Observe that we have 
+\begin{align}
+\dkl(P_{\theta_1} \parallel P_{\theta_2}) = \frac{n \Delta^2}{2 \sigma^2}, \qtext{which implies} TV(P_{\theta_1}, P_{\theta_2}) \leq \sqrt{\frac{n \Delta^2}{4 \sigma^2}}, 
+\end{align}
+by Pinsker's inequality. Thus, by choosing $\Delta$ to be the largest value that makes this upper bound on TV equal to $1/2$, we get 
+\begin{align}
+\calR(\Theta, \Phi\circ \rho) \geq \frac{1}{4} \Delta^2 = \frac{1}{4} \lp \frac{\sigma^2}{2n} \rp = \frac{\sigma^2}{8n}. 
+\end{align}
+This proves that the MLE is minimax rate-optimal. 
+
+\subsection{Multi-armed Bandits}
+\label{subsec:two-point-multiarmed-bandits}
+
+
+We now show that the two-point method can be used to derive the optimal minimax rates even in problems beyond the usual estimation. In particular, we look at the $K$-armed bandit problem, which is an instance of the general "interactive decision-making" problems introduced in an earlier lecture. In Homework 2, we will analyze the upper confidence bound~(UCB) algorithm, which admits a regret bound of the order $\mc{O}(\sqrt{n K})$~(ignoring logarithmic factors), where $n$ denotes the problem horizon. We will now use the the two-point method to establish the rate-optimality~(modulo logarithmic factors) of this procedure. Recall the problem setup: 
+\begin{itemize}
+	\item A $K$-armed bandit problem is characterized by a parameter $\theta \in \Theta = \mathbb{R}^K$ representing the mean of the $K$ ``arms''~(or distributions). Each arm $i \in [K]$ corresopnds to a distribution with mean $\theta[i]$, that is known to be $\sigma^2$-sub-Gaussian, with a known $\sigma^2$. 
+	\item For a given horizon $n$, the objective is to design a policy $\pi \equiv (\pi_1, \ldots, \pi_n)$, with $\pi_t:\mathbb{R}^{t-1}\times[K]^{t-1} \to \calP([K])$,  for drawing the arms in an adaptive manner. 
+	\item The measure of performance is the expected regret, defined as 
+	\begin{align}
+		\mathrm{Reg}(n, \pi, \theta) = n \max_{i \in [K]} \theta[i] - \mathbb{E}_{\theta}\lb \sum_{t=1}^n X_{I_t, t} \rb, \qtext{where} I_t \sim \pi_t \qtext{for} t\in [n]. 
+	\end{align}
+	Let $T_i(n, \pi)$ denote the number of times arm $i$ has been pulled in the first $n$ rounds by the policy $\pi$. Then, the regret can be re-written as 
+	\begin{align}
+	\mathrm{Reg}(n, \pi, \theta) = n \max_{i \in [K]} \theta[i] - \sum_{i=1}^K \mathbb{E}_{\theta}[T_i(n, \pi)] \Delta_i, \qtext{where} \Delta_i \defined \max_{j\in [K]} \theta[j] - \theta[i] 
+	\end{align}
+	is the suboptimality of the $i^{th}$ arm. 
+\end{itemize}
+To apply the two-point method, we need to select two instances of the MAB problem. For some $\delta>0$ to be decided later, define $\theta_1 = (\delta, 0, \ldots, 0) \in \Theta$. In this case, $i^*(\theta_1) \defined \argmax_{i \in [K]} \theta_1[i] = 1$ is the optimal arm. Now, observe the following: 
+\begin{align}
+\sum_{j=2}^{K} \mathbb{E}_{\theta_1}[T_j(n, \pi)] \leq n, \qtext{$\implies$} \exists j \in \{2, \ldots, K\} \qtext{s.t.} \mathbb{E}_{\theta_1}[T_j(n, \pi)] \leq \frac{n}{K-1}. 
+\end{align}
+In other words, there must exist at least one arm that is (i) suboptimal for $\theta_1$, and (ii) is sampled less than average by $\pi$ under $\theta_1$. Let us use this arm to define a new problem instance, whose mean is $2\delta$ at the $j^{th}$ coordinate: $\theta_2 = (\delta, 0, \ldots, 2\delta, 0, \ldots, 0)$.\footnote{\blue{Note:} this is a cruicial aspect of our construction for MABs, where we use the performance of $\pi$ on the first problem instance $\theta_1$, to guide the choice of the second problem instance $\theta_2$. An ``oblivious'' application of the two-point method would not lead to the right lower bound.} 
+
+In the next step, we will relate the regret of the policy $\pi$ for the two problems in terms of the expected value of $T_1(n, \pi)$: 
+\begin{align}
+&\mathrm{Reg}(n, \pi, \theta_1) = \sum_{i=1}^K \mathbb{E}_{\theta_1}[T_i(n, \pi)] (\delta - \theta_1[i]) = \delta \times \lp n - \mathbb{E}_{\theta_1}\lb T_1(n, \pi) \rb  \rp, \qtext{and}  \\
+&\mathrm{Reg}(n, \pi, \theta_2) = \sum_{i=1}^K \mathbb{E}_{\theta_1}[T_i(n, \pi)] (2\delta - \theta_1[i]) \geq \delta \times  \mathbb{E}_{\theta_1}\lb T_2(n, \pi) \rb.  
+\end{align}
+Now, comes the cruicial part: we define the event $E_1 = \{T_1(n, \pi) < n/2\}$. Then, the above expression for regret bounds can we connected to the probability of $E_1$ as 
+\begin{align}
+\mathrm{Reg}(n, \pi, \theta_1) \geq \frac{\delta n}{2} \times \mathbb{P}_{\theta_1}(E_1), \qtext{and}  
+\mathrm{Reg}(n, \pi, \theta_1) \geq \frac{\delta n}{2} \times \mathbb{P}_{\theta_2}(E_1^c) \label{eq:mab-regret-lower-bound-1}
+\end{align}
+
+This means that we can lower bound the minimax regret with the average of these two regrets: 
+\begin{align}
+\mathrm{Reg}(n, \Theta) \defined \inf_{\pi} \sup_{\theta \in \Theta} \mathrm{Reg}(n, \pi, \theta) &\geq \frac{1}{2}\lp \mathrm{Reg}(n, \pi, \theta_1) + \mathrm{Reg}(n, \pi, \theta_2) \rp  
+\geq \frac{n \delta}{4}\lp 1 - \lp \mathbb{P}_{\theta_2}(E_1) - \mathbb{P}_{\theta_1}(E_1) \rp \rp \\
+& \geq \frac{n \delta}{4}\lp 1 - TV(P_{\theta_1}, P_{\theta_2}) \rp 
+\geq \frac{n \delta}{8} \exp \lp - \dkl(P_{\theta_1} \parallel P_{\theta_2}) \rp. \label{eq:mab-regret-lower-bound-2}
+\end{align}
+
+To complete the proof, we will employ the divergence bound for interactive decision-making derived in~Lemma~\ref{lemma:interative-relative-entropy}, according to which we have 
+\begin{align}
+\dkl(P_{\theta_1} \parallel P_{\theta_2}) & = \mathbb{E}_{\theta_1}[T_j(n, \pi)] \dkl\lp N(0, \sigma^2) \parallel N(2\delta, \sigma^2) \rp = \mathbb{E}_{\theta_1}[T_j(n, \pi)] \frac{4\delta^2}{2 \sigma^2}  
+ \leq \frac{2 n \delta^2}{(K-1) \sigma^2}. 
+\end{align}
+For the last inequality, we use the defining property of arm $j$. Plugging this back into~\eqref{eq:mab-regret-lower-bound-2}, and selecting $\delta = \sigma \sqrt{(K-1)/2n}$, we get 
+\begin{align}
+\mathrm{Reg}(n, \Theta) \defined \inf_{\pi} \sup_{\theta \in \Theta} \mathrm{Reg}(n, \pi, \theta) & \geq \frac{\sigma\sqrt{n(K-1)}}{8 \sqrt{2} e}  = \Omega(\sqrt{n K}). 
+\end{align}
+
+\subsubsection{Relative Entropy Decomposition for Bandits}
+\label{subsubsec:relative-entropy-bandits}
+
+\begin{lemma}
+\label{lemma:interactive-relative-entropy} Consider two $K$-armed bandit instances with mean vectors $\theta_1$ and $\theta_2$. For some policy $\pi$ and horizon $n \geq 1$, let $P_{\theta_1}^{\pi}$ and $P_{\theta_2}^{\pi}$ denote the joint distributions of the first $n$ action-observation pairs induced by the policy $\pi$ on the two problem instances. Then, we have 
+\begin{align}
+D_{KL}(P_{\theta_1}^{\pi} \parallel P_{\theta_2}^{\pi}) = \sum_{i=1}^K \mathbb{E}_{\theta_1}[T_i(n, \pi)] \dkl(f_{\theta_1, i} \parallel f_{\theta_2, i}). 
+\end{align}
+Here we use $f_{\theta_j, i}$ to denote the distribution of the $i^{th}$ arm for problem instance $j$. 
+\end{lemma}
+
+The proof is essentially an application of the tower-rule of conditional expectation. In particular, let $H_n = (A_1, X_1, A_2, X_2, \ldots, A_n, X_n)$ denote the first $n$ action-observation pairs. Then, for any realization $h_n = (a_1, x_1, \ldots, a_n, x_n)$, the likelihood ratio of $P_{\theta_1}^{\pi}$ and $P_{\theta_2}^{\pi}$ can be written as 
+\begin{align}
+\frac{p_{\theta_1}^{\pi}(h_n)}{p_{\theta_2}^{\pi}(h_n)} = \prod_{t=1}^n \frac{\pi_t(a_t|h_{t-1}) f_{\theta_1, a_t}(x_t)}{\pi_t(a_t|h_{t-1}) f_{\theta_2, a_t}(x_t)} = \prod_{t=1}^n \frac{f_{\theta_1, a_t}(x_t)}{f_{\theta_2, a_t}(x_t)}. 
+\end{align}
+Hence, we can evaluate the relative entropy as 
+\begin{align}
+\dkl(P_{\theta_1}^{\pi} \parallel P_{\theta_2}^{\pi}) &= \mathbb{E}\lb \sum_{t=1}^n \log  \frac{f_{\theta_1, A_t}(X_t)}{f_{\theta_2, A_t}(X_t)}  \rb 
+ = \sum_{t=1}^n \mathbb{E}\lb \mathbb{E}\lb\log \frac{f_{\theta_1, A_t}(X_t)}{f_{\theta_2, A_t}(X_t)}  \middle \vert H_{t-1} \rb \rb.  
+ \label{eq:kl-decomposition-proof-1}
+\end{align}
+The second equality uses the tower property of conditional expectation. Now, observe that for any $t$, we have the Markov chain $H_{t-1} \longrightarrow A_t \longrightarrow X_t$; having selected the arm $A_t$, the observation $X_t$ is conditionally independent of the  past $H_{t-1}$.  Using this, we can evaluate the inner expectation as follows, with $\ell_k(x) = f_{\theta_1, k}(x)/f_{\theta_2, k}(x)$: 
+\begin{align}
+	\mathbb{E}\lb \log \ell_{A_t}(X_t) \middle \vert H_{t-1}\rb &= \mathbb{E}\lb \mathbb{E}\lb \log \ell_{A_t}(X_t) \middle \vert A_t, H_{t-1} \rb \middle \vert H_{t-1} \rb \\
+	&= \mathbb{E} \lb \sum_{k=1}^K \mathbb{P}(A_t=k \mid H_{t-1}) \mathbb{E}\lb  \log \ell_k(X_t) \middle \vert H_{t-1}, A_t=k\rb \middle  \vert H_{t-1}\rb. 
+\end{align}
+Now, the inner expectation is equal to $D_k \coloneqq \dkl(f_{\theta_1, k} \parallel f_{\theta_2, k})$, since conditioned on $A_t=k$, the observation $X_t$ is independent of the past. Hence, we get 
+\begin{align}
+\mathbb{E}\lb \log \ell_{A_t}(X_t) \middle \vert H_{t-1}\rb &= \sum_{k=1}^K \mathbb{P}(A_t=k \mid H_{t-1}) D_k. 
+\end{align}
+Combining this with~\eqref{eq:kl-decomposition-proof-1}, we get 
+\begin{align}
+\dkl(P_{\theta_1}^{\pi} \parallel P_{\theta_2}^{\pi}) & =  \sum_{t=1}^n \mathbb{E}\lb \sum_{k=1}^K \mathbb{P}\lp A_t=k \mid H_{t-1} \rp D_k \rb\\
+&= \sum_{t=1}^n \sum_{k=1}^K \mathbb{P}(A_t=k) D_k 
+ = \sum_{k=1}^K D_k \sum_{t=1}^n \mathbb{P}(A_t=k)  \\
+ &= \sum_{k=1}^K D_k \mathbb{E}\lb \sum_{t=1}^n \boldsymbol{1}_{A_t=k} \rb 
+ = \sum_{k=1}^K D_k \mathbb{E}_{\theta_1}[T_k(n, \pi)]
+\end{align}
+This completes the proof. \hfill \qedsymbol
+
+
+
+\subsection{Examples where two-point methods are insufficient}
+
+Here are some problem instances in which the basic two-point method introduced in this lecture is insufficient:
+
+\begin{description}
+	\item[Gaussian Location Model in $\mathbb{R}^d$.]
+	The simplest case in which the two-point method fails is when we wish to estimate the mean of Gaussian random vectors. In particular, consider the case of $\X = (Y_1, \ldots, Y_n) \simiid N(\theta, \sigma^2 I_d)$ for some $d\geq 2$. Then, the MLE $\thetahat_n = \frac{1}{n} \sum_{i=1}^n Y_i$ satisfies 
+	\begin{align}
+	\mathbb{E}_{\theta} \lb \|\thetahat_n - \theta\|_2^2 \rb = \frac{\sigma^2 d}{n}. 
+	\end{align}
+	However, if we use a two-point method as in~Section~\ref{subsec:gaussian-location-model}, the lower bound again turns out to be $\Omega(\sigma^2/n)$, and is unable to capture the dimension dependence.
+	
+	\item[Nonparametric Density Estimation.] In a previous lecture, we showed that there exists a histogram estimator for $(M, \gamma)$ H\"older continuous densities on $[0,1]$ that achieves an integrated squared error bound $\mathcal{O}(n^{-2\gamma/(1+2\gamma)})$. Using the two-point method to establish the optimality of this procedure fails, as it only leads to $\Omega(n^{-1})$ lower bound. We will develop the appropriate techniques that obtain the correct lower bound in a future lecture.   
+
+	\item[Sparse Mean Estimation:] Similar to the first example of this section, the two-point method cannot get the right sparsity dependent rate. 
+
+	\item[Minimax Hypothesis Testing and Estimation of Functionals.] Another important application where the basic two-point method is insufficient is in establishing the optimal rates of functional estimation. We will discuss a natural generalization of the two-point method~(referred to as the ``method of two fuzzy hypotheses'' by Tsybakov) to address such problems. 
+
+
+\end{description}
+For these problems we need to develop more intricate techniques that will be our topic of discussion in the next few lectures. 
+
+%%%%%
+\subsection*{Notes}
+{\small
+
+The two-point method is based on a result of~\citet{lecam1973convergence}, who established a connection between testing and the total-variation distance between the convex hull of two hypotheses classes. We have mostly followed the presentation approach of~\citet[Chapter 2]{tsybakov2009nonparametric}, with some minor modifications in the presentation. 
+For the MAB lower bound, we have used the simplified proof given by~\citet[Chapter 15]{lattimore2020bandit}. 
+}
+
+%%%%%%
+\bibliographystyle{abbrvnat}           % if you need a bibliography
+\bibliography{../ref}                % assuming yours is named ref.bib
+
+
+\end{document}
