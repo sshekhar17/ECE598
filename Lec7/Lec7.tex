@@ -1,0 +1,244 @@
+\documentclass[12pt]{article}
+\usepackage[english]{babel}
+\usepackage[utf8x]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{../scribe}
+\usepackage{listings}
+
+\usepackage{hyperref}
+% \usepackage{cleveref}
+\usepackage{xcolor}
+\usepackage{natbib}
+\usepackage{tikz}
+\renewcommand{\arraystretch}{1.5}
+\usepackage{nicefrac}
+% \newcommand{\thetahat}{\widehat{\theta}}
+% \Scribe{Shubhanshu Shekhar}
+\Lecturer{Shubhanshu Shekhar}
+\LectureNumber{7}
+\LectureDate{18th September, 2025}
+\LectureTitle{Minimax Lower Bounds Part II}
+
+\lstset{style=mystyle}
+% \usepackage{tikz}
+\usepackage{comment}
+% \usepackage{pgfplots}
+% \usepackage{enumitem}
+\input{../preamble}
+\input{../newMacros}
+
+
+\begin{document}
+	\MakeScribeTop
+%#############################################################
+%#############################################################
+%#############################################################
+%#############################################################
+
+In this lecture, we will study a generalization of the two-point method in which the second point is replaced with a mixture. This minor change makes this method significantly more potent in testing problems involving a ``$k$-subset'' structure and for functional estimation tasks. 
+
+\section{Generalized Two-Point Method}
+\label{sec:generalized-two-point-method}
+As before, we are working in a decision-theoretic setting with model $\{P_\theta: \theta \in \Theta\}$, decision space $\calW$, and a loss function $L:\Theta \times \calW \to \mathbb{R}$. 
+
+\begin{theorem}
+	\label{theorem:point-vs-mixture} Suppose there exist $\theta_0 \in \Theta$, and $\Theta_1 \subset \Theta$, satisfying the following \emph{uniform separation} condition with some $\omega>0$: 
+	\begin{align}
+	\inf_{w \in \calW} \inf_{\theta_1 \in \Theta_1} \frac{L(\theta_0, w) + L(\theta_1, w)}{2} \geq \omega. 
+	\end{align}
+	Let $\mu$ denote any probability measure supported on $\Theta_1$, and let $P_\mu$ denote the mixture distribution satisfying 
+	\begin{align}
+	P_\mu(E) = \int_{\Theta_1} P_\theta(E) d\mu(\theta), \qtext{for all} E \in \calF_{\calX}. 
+	\end{align}
+	Then, we have the following lower bound: 
+	\begin{align}
+		R^*(\Theta, \calW) = \inf_{P_{W|\X}} \sup_{\theta \in \Theta} \mathbb{E}_{\theta}\lb L(\theta, W) \rb \; \geq \;  \omega \lp 1 - TV(P_{\theta_0}, P_\mu) \rp.  \label{eq:point-vs-mixture-1}
+	\end{align}
+\end{theorem}
+\begin{remark}
+\label{remark:mixture-justification-1}
+	Observe that the only difference from the two-point lower bound we saw in the previous lecture is that $TV(P_{\theta_0}, P_{\theta_1})$ is replaced with $TV(P_{\theta_0}, P_{\mu})$. Since $P_\mu = \mathbb{E}_{\theta \sim \mu}[P_\theta]$, the convexity property of total variation implies that $TV(P_{\theta_0}, P_\mu) \leq \mathbb{E}_{\theta_1 \sim \mu}[TV(P_{\theta_0}, P_{\theta_1} )]$. This fact hints at the use cases of~Theorem~\ref{theorem:point-vs-mixture} to be problems where the total variation~(and other divergences) between the mixture $P_{\mu}$ and $P_{\theta_0}$ can be much smaller than the total variation between $P_{\theta_0}$ and any individual $P_{\theta}$ for $\theta \in \Theta_1$. 
+\end{remark}
+\emph{Proof of Theorem~\ref{theorem:point-vs-mixture}.} Let $\pi = \frac{1}{2} \lp \delta_{\theta_0} + \mu \rp$ denote a prior distribution over the parameter space. Then, we know that the minimax risk is always lower bounded by any Bayes risk, which implies 
+\begin{align}
+	\sup_{\theta \in \Theta} R(\theta, P_{W|\X}) \geq R(\pi, P_{W|\X}) = \frac{1}{2}\lp \mathbb{E}_{\theta_0}[L(\theta_0, W)]  +  \mathbb{E}_{\underline{\theta} \sim\mu}[L(\underline{\theta}, W)]\rp
+\end{align}
+Now, we can expand the two terms in the RHS as follows~(assuming densities $p_\theta$, $p_\mu$): 
+\begin{align}
+\mathbb{E}_{\theta_0} [L(\theta_0, W)] &= \int_{\calX} \lp \int_{\calW} L(\theta_0, w) p_{W|\X}(w|x) dw \rp p_{\theta_0}(x) =: \int f_0(x) p_{\theta_0}(x) dx, \quad \text{and} \\
+\mathbb{E}_{\underline{\theta} \sim\mu}[L(\underline{\theta}, W)] &= \int_{\calX} p_{\mu}(x) \lp \int_{\Theta_1} \frac{p_{\theta}(x)}{p_\mu(x)} \mu(\theta) \lp \int_{\calW} L(\theta, w) p_{W|\X}(w|x)dw \rp d\theta \rp dx \\
+&= \int_{\calX} p_{\mu}(x) \lp \int_{\calW} p_{W|\X}(w)  \lp \int_{\Theta_1} L(\theta, w) \frac{p_{\theta}(x)}{p_\mu(x)} \mu(\theta) d\theta \rp dw \rp dx \\
+& \coloneqq \int_{\calX} g(x) p_{\mu}(x) dx
+\end{align}
+Now, observe that $(p_\theta(x) \mu(\theta)/p_\mu(x)) = \mu(\theta|x)$ is the posterior distribution of $\underline{\theta}$, which implies  
+\begin{align}
+f(x) + g(x) &= \int_{\calW} p_{W|\X}(w|x) \lp  \int_{\Theta_1} \lp L(\theta, w) + L(\theta_0, w)  \rp \mu(\theta|x) d\theta  \rp dw \\
+& \geq 2\omega \int_{\calW} p_{W|\X}(w|x) \lp \int_{\Theta_1} \mu(\theta|x) d\theta \rp dw = 2\omega. 
+\end{align}
+The inequality above relies on the separation assumption. Finally, this implies that 
+\begin{align}
+\sup_{\theta \in \Theta} R(\theta, P_{W|\X}) \; &\geq \; \frac{1}{2}\lp  \int f(x) p_{\theta_0}(x) dx + \int g(x) p_{\mu}(x) dx \rp \\
+& \; \geq\; \frac 1 2 \int \lp f(x) + g(x) \rp  \min\{ p_{\theta_0}(x), \, p_{\mu}(x) \} dx \\
+& \geq  \omega \int \min \{ p_{\theta_0}(x), \, p_{\mu}(x) \} dx = \omega (1-TV(P_{\theta_0}, \, P_{\mu})), 
+\end{align}
+where the last equality uses the fact that $TV(P, Q) = 1 - \int \min\{p, q\}$. 
+\hfill \qedsymbol
+\begin{remark}
+	\label{remark:extension-to-two-mixtures} A close look at the proof suggests that the same argument would have also worked for the case of two mixtures (instead of point-vs-mixture). 
+\end{remark}
+%%%%%%
+
+
+\subsection{Divergence Bound}
+\label{subsec:divergence-bound}
+	To apply Theorem~\ref{theorem:point-vs-mixture} in practice, we first need to fix $(\theta_0, \Theta_1)$, then select an appropriate mixture distribution $\mu$, and finally get an upper bound on $TV(P_{\theta_0}, P_\mu)$. In most cases, it suffices to choose $(\theta_0, \Theta_1)$ to maximize $\omega$~(the separation) while controlling $TV(P_{\theta_0}, P_\mu)$ to a value less than $1/2$. It turns out that for mixtures, working with chi-squared distance is most convenient, as we explain next. 
+
+	For simplicity, throughout we will assume that $P_\theta$ has a density $p_\theta$ with respect to some common dominating measure~(which we simply denote by $dx$). Recall that the chi-squared divergence between any pair $(P,Q)$ with densities $(p,q)$ is defined as 
+	\begin{align}
+	\chi^2(P\parallel Q) = \int \lp\frac{p(x)}{q(x)} - 1 \rp^2 q(x) dx = \int \frac{\big(p(x)-q(x)\big)^2}{q(x)} dx = \int \frac{p(x)^2}{q(x)} dx -1.  
+	\end{align}	
+	Our next result shows why this formulation of chi-squared is useful in handling mixtures. 
+
+	\begin{lemma}
+		\label{lemma:mixture-chi-squared}
+		Assume throughout that $\int p_\theta(x)^2/p_{\theta_0}(x)dx < \infty$ for all $\theta \in \Theta_1$. Then, we have the following: 
+		\begin{align}
+			1 + \chi^2(P_\mu, P_{\theta_0}) &= \mathbb{E}_{\theta, \theta' \sim \mu}\lb \int \frac{p_{\theta}(x) p_{\theta'}(x)}{p_{\theta_0}(x)} dx \rb = \mathbb{E}_{\theta, \theta' \sim \mu}\lb \int \ell_{\theta, \theta_0}(x) \ell_{\theta', \theta_0}(x) p_{\theta_0}(x)dx \rb \\
+			& = \mathbb{E}_{\theta, \theta' \sim \mu} \lb \langle \ell_{\theta, \theta_0}, \ell_{\theta', \theta_0} \rangle_{L^2(P_{\theta_0})} \rb, 
+		\end{align}
+		where $\ell_{\theta, \theta_0}(x) = p_\theta(x)/p_{\theta_0}(x)$, and we use $\langle \cdot, \cdot \rangle_{L^2(P_{\theta_0})}$ to denote the inner product in the space of square integrable functions (w.r.t. $P_{\theta_0}$).  
+	\end{lemma}
+
+	\emph{Proof of Lemma~\ref{lemma:mixture-chi-squared}.}
+	We know from the definition of chi-squared divergence that 
+	\begin{align}
+		1 + \chi^2(P_\mu \parallel P_{\theta_0}) &= \int \frac{p_\mu(x)^2}{p_{\theta_0}(x)} dx = \int \frac{ \lp\int p_\theta(x) d\mu(\theta) \rp \lp\int p_{\theta'}(x) d\mu(\theta') \rp  }{p_{\theta_0(x)}} dx \\
+		& = \int d\mu(\theta) \int d\mu(\theta') \int \frac{p_\theta(x) p_{\theta'}(x)}{p_{\theta_0}(x)} dx. 
+	\end{align}
+This completes the proof.  \hfill \qedsymbol
+
+
+This result indicates that the chi-squared divergence between a point and a mixture distribution depends on the average ``similarity''~(as measured by the inner product) between two randomly drawn independent distributions according to $\mu$. 
+
+In many applications, we work with \iid observations, and our next result shows the crucial property of tensorization which makes chi-squared divergence the appropriate choice when working with mixtures. 
+
+\begin{lemma}
+\label{lemma:chi-squared-tensorization} For any $\theta \in \Theta$, let $P_{\theta}^n$ denote  the $n$-fold product measure, and for some probability measure $\mu$ supported on $\Theta_1$, let $P_\mu^n$ denote $\mathbb{E}_{\underline{\theta} \sim \mu}[P_{\underline{\theta}}^n]$. Then, with $\kappa(\theta, \theta') \coloneqq \langle \ell_{\theta, \theta_0}, \ell_{\theta', \theta_0} \rangle_{L^2(P_{\theta_0})}$, we have the following: 
+\begin{align}
+1 + \chi^2\lp P_{\mu}^n \parallel P_{\theta_0}^n \rp = \mathbb{E}_{\utheta, \utheta' \sim \mu}\lb \kappa(\utheta, \utheta')^n \rb. 
+\end{align}
+\end{lemma}
+\emph{Proof of Lemma~\ref{lemma:chi-squared-tensorization}.} The proof is a simple consequence of the previous derivation. In particular, from~Lemma~\ref{lemma:mixture-chi-squared}, we know that 
+\begin{align}
+1 + \chi^2(P_{\mu}^n \parallel P_{\theta_0}^n) = \mathbb{E}_{\utheta, \utheta' \sim \mu}\lb \left \langle \frac{p_{\utheta}^n(x^n)}{p_{\theta_0}^n(x^n)}, \frac{p_{\utheta'}^n(x^n)}{p_{\theta_0}^n(x^n)}\right\rangle_{L^2(P_{\theta_0^n})} \rb. 
+\end{align}
+Now, on expanding the inner product term, we get 
+\begin{align}
+\left \langle \frac{p_{\utheta}^n(x^n)}{p_{\theta_0}^n(x^n)}, \frac{p_{\utheta'}^n(x^n)}{p_{\theta_0}^n(x^n)}\right\rangle_{L^2(P_{\theta_0^n})}  &= \int \frac{p_{\utheta}^n(x^n) p_{\utheta'}^n(x^n)}{p_{\theta_0}^n(x^n)} dx^n \\
+&= \int \frac{p_{\utheta}(x_1) p_{\utheta'}(x_1)}{p_{\theta_0}(x_1)} dx_1 \ldots \int \frac{p_{\utheta}(x_1) p_{\utheta'}(x_1)}{p_{\theta_0}(x_1)}dx_n  = \kappa(\utheta, \utheta')^n. 
+\end{align}
+This completes the proof. \hfill \qedsymbol
+\begin{remark}
+	\label{remark:chi-squared-tensorization}
+	The previous two lemmas tell us that the chi-squared divergence between $P_\mu^n = \mathbb{E}_{\utheta \sim \mu}[P_\theta^n]$ and $P_{\theta_0}$ is controlled by the average value of $\kappa(\utheta, \utheta')$; a measure of how similar two randomly drawn product distributions in $\Theta_1$ are. This gives us an indication of the type of problems in which the point-vs-mixture approach is useful: if each $\theta_1$ is such that $P_{\theta_0}$ and $P_{\theta_1}$ are quite distinct from each other, but any two $P_{\theta_1}$ and $P_{\theta_1'}$ are almost ``orthogonal''. In such cases, the two-point method would lead to a suboptimal lower bound~(owing to the large distinctness between $P_{\theta_0}$ and $P_{\theta_1}$), but a mixture method may be more useful~(owing to the almost orthogonality between two randomly drawn elements from $\mu$). 
+\end{remark}
+
+\section{Application: Uniformity Testing} 
+\label{sec:application-1-uniformity-testing}
+
+Let us consider the hypothesis testing problem within the minimax framework. For some $\{P_\theta: \theta \in \Theta\}$, we are given $n$ \iid observations $\X = X^n = (X_1, \ldots, X_n)$ drawn from an unknown $P_\theta$. Our goal is to test between 
+\begin{align}
+	H_0: \theta \in \Theta_0, \qtext{versus} H_1: \theta \in \Theta_1, \quad \text{for disjoint } \Theta_0, \Theta_1 \subset \Theta. 
+\end{align}
+A randomized hypothesis test can be represented by a mapping $\Psi:\calX_n \coloneqq \calX^n \to [0,1]$, with $\Psi(\x)$ denoting the probability of deciding that $H_1$ is true. In other words, the decision space is $\calW = \{0,1\}$, and our decision is $W \sim \Bernoulli(\Psi(X^n))$. Then, the minimax risk with the $0$-$1$ loss is defined as 
+\begin{align}
+R_n^*(\Theta_0, \Theta_1) = \inf_{\Psi} \sup_{\theta \in \Theta_0 \cup \Theta_1} \mathbb{E}_{\theta}[\boldsymbol{1}_{W \neq h_\theta}] = \inf_{\Psi} \sup_{\theta \in \Theta_0 \cup \Theta_1} \mathbb{P}_{\theta}(W \neq h_\theta), \qtext{where} h_\theta = \boldsymbol{1}_{\theta \in \Theta_1}. 
+\end{align}
+
+A simple instance of this problem is for the identity testing for discrete distributions. Assume that $X_1, \ldots, X_n \overset{i.i.d.}{\sim} P_X$ for some distribution supported on a finite alphabet $\calX$ with $|\calX|=k$, and let $U_k$ denote the uniform distribution over $\calX$. Then, for some $\epsilon>0$, consider the problem: 
+\begin{align}
+H_0: P_X = U_k, \qtext{versus} H_1: \|P_X - U_k\|_1 \geq \epsilon. 
+\end{align}
+Here, the parameter space is $\Theta = \Delta_k$, with $\Theta_0 = \{\theta_0\}$ and $\Theta_1 = \{\theta: \|\theta_0- \theta\|_1 \geq \epsilon\}$, where $\theta_0 = (1/k, \ldots, 1/k)$. 
+This task is called uniformity testing in the theoretical computer science literature. 
+
+
+\paragraph{Lower Bound via Theorem~\ref{theorem:point-vs-mixture}.} The first step is note that the ``separation condition'' is satisfied with $\omega = 1/2$: for any $\theta \in \Theta_1$, we have 
+\begin{align}
+L(\theta_0, w) + L(\theta, w) = \boldsymbol{1}_{w=1} + \boldsymbol{1}_{w=0} = 1. 
+\end{align}
+Hence,~Theorem~\ref{theorem:point-vs-mixture} implies that the minimax risk in this case is lower bounded  by 
+\begin{align}
+R_n^*(\theta_0, \epsilon) \geq \sup_{\mu} \frac{1}{2}\lp 1 - TV(P_\mu, P_{\theta_0}) \rp,
+\end{align}
+where $\mu$ is any probability measure of the alternative set. We will now describe Paninski's construction of this mixture. 
+
+Assume that $k$ is even, and pair off the coordinates into $\{(2j-1, 2j): 1 \leq j \leq k/2\}$. let $\vv = (v_1, \ldots, v_{k/2}) \in \{-1, \}^{k/2}$ be drawn \iid from a Rademacher distribution~(i.e., $\pm 1$ w.p. $1/2$ each), and define 
+\begin{align}
+q_{\vv} \in \Delta_k, \qtext{with}
+q_{\vv}[2j-1] = \frac{1+\epsilon v_j}{k}, \qtext{and} 
+q_{\vv}[2j] = \frac{1- \epsilon v_j}{k}, \quad \text{for } j \in [k/2]. 
+\end{align}
+It is easy to verify that each $q_{\vv}$ lies in $\Theta_1$, and the mixture distribution $\mu$ is uniformly distributed over the subset $\{q_{\vv}: \vv \in \{-1, 1\}^{k/2} \} \subset \Theta_1$. Interestingly, we have $\mathbb{E}_{\vv}[q_{\vv}] = p_{\theta_0}$. 
+Based on this, we can compute the chi-squared divergence as follows: 
+\begin{align}
+\kappa(\vv, \vv') &= \sum_{i=1}^k \frac{q_{\vv}[i] q_{\vv'}[i]}{1/k} = k \sum_{j=1}^{k/2} \lp \frac{1 + \epsilon v_j}{k} \frac{1 + \epsilon v'_j}{k} + \frac{1 - \epsilon v_j}{k} \frac{1 - \epsilon v'_j}{k} \rp \\
+& = \frac{1}{k} \sum_{j=1}^{k/2} \lp 1 + \epsilon(v_j+v'_j) + \epsilon^2v_jv'_j + 1 - \epsilon(v_j + v'_j) + \epsilon^2 v_j v'_j \rp = 1 + \frac{2 \epsilon^2}{k} \sum_{j=1}^{k/2} v_j v'_j. 
+\end{align}
+Now, observe that each $s_j \coloneqq v_j v'_j$ is also a Rademacher random variable. Hence, we have 
+\begin{align}
+1 + \chi^2(P_{\mu}^n \parallel P_{\theta_0}) &= \mathbb{E}_{\vv, \vv'} \lb \lp 1 + \frac{2 \epsilon^2}{k} \sum_{j=1}^{k/2} s_j \rp^n \rb \\
+& \leq \mathbb{E}_{\vv, \vv'} \lb \exp \lp \frac{2n \epsilon^2}{k} \sum_{j=1}^{k/2} s_j \rp \rb && (\text{since } 1 + x \leq e^x) \\
+& =  \prod_{j=1}^{k/2} \mathbb{E}\lb \exp \lp \frac{2n \epsilon^2}{k}  s_j \rp \rb  = \prod_{j=1}^{k/2} \frac 1 2 \lp e^{2n\epsilon^2/k} + e^{-2n\epsilon^2/k} \rp \\
+& \leq  \prod_{j=1}^{k/2} e^{2n^2 \epsilon^4/k^2} && (\text{since } e^x + e^{-x} \leq 2 e^{x^2/2}) \\
+& = e^{n^2 \epsilon^4/k}. 
+\end{align}
+
+Thus, using the fact that $TV(P, Q) \leq \sqrt{\chi^2(P \parallel Q)/2}$, we get 
+\begin{align}
+R^*_n(\theta_0, \epsilon) \geq \frac{1}{2}\lp 1 - \sqrt{\frac{e^{n^2 \epsilon^4/k} -1 }{2}} \rp. \label{eq:uniformity-testing-1}
+\end{align}
+
+\paragraph{Interpreting the lower bound.} This lower bound can be used to characterize fundamental limits on either the detection boundary, or the sample complexity. In particular, suppose we wish to answer the question: For a fixed $n$, $k$, suppose we have a procedure that can achieve a minimax risk of $r \in (0,1)$. Then, what is the smallest possible value of $\epsilon \equiv \epsilon_{n,k,r}$? To answer this, note that~\eqref{eq:uniformity-testing-1} implies 
+\begin{align}
+\log (1 + 2(1 + 2r)^2) \leq  {n^2 \epsilon^4/k}  \quad \implies \quad \epsilon_{n, k, r} \geq \frac{c_r k^{1/4}}{\sqrt{n}} \qtext{for} c_r = \lp \log (1 + 2(1 + 2r)^2)\rp^{1/4}. 
+\end{align}
+This characterizes the \emph{detection boundary}, or a lower limit on the closest alternative that can be distinguished well enough by any test. 
+Conversely, we can also characterize the sample complexity,  which is the smallest $n$ for which there exists a procedure with a minimax risk of $r$~(with $\epsilon, k$ fixed). The above equation tells us that 
+\begin{align}
+n_{\epsilon,k, r} \geq \frac{c_r^2 \sqrt{k}}{\epsilon^2}. 
+\end{align}
+The key benefit of the two point method is that it can capture the $k$-dependence of the detection boundary / sample complexity. 
+
+\paragraph{Failure of the two-point method.} If we were to use the two-point method, then we have for any $Q$ in the alternative class
+\begin{align}
+\chi^2(Q^n \parallel P_{\theta_0}^n) = \lp 1 + \chi^2(Q \parallel P_{\theta_0})^n \rp - 1. 
+\end{align}
+Now, we can show that 
+\begin{align}
+\inf_{q: \|q-p_{\theta_0}\|_1 \geq \epsilon} \chi^2 (q \parallel p_{\theta_0}) = \epsilon^2, 
+\end{align}
+achieved at the pmf with equal $\pm \epsilon$  perturbation from the uniform pmf. This gives us 
+\begin{align}
+\chi^2(Q^n \parallel P_{\theta_0}^n) \leq (1+ \epsilon^2)^n - 1 \leq e^{n \epsilon^2} - 1. 
+\end{align}
+This will result in 
+\begin{align}
+\epsilon_{n, k, r} \gtrsim \frac{1}{\sqrt{n}}, \qtext{and} n_{\epsilon, k, r} \gtrsim \frac{1}{\epsilon^2}, 
+\end{align}
+thus not capturing the $k$ dependence. 
+
+
+\paragraph{Achievability.} One constructive approach for addressing this task is based on the so-called ``collision statistic'' 
+\begin{align}
+C_n = \frac{1}{{n \choose 2}}\sum_{i \neq j} \boldsymbol{1}_{X_i = X_j}. 
+\end{align}
+The idea is that in expectation the number of collisions will be the smallest under the uniform distribution, and hence we can reject the null if $C_n$ is above an appropriately chosen threshold. We will work out the details in Homework 2. 
+
+
+% 
+% \bibliographystyle{abbrvnat}           % if you need a bibliography
+% \bibliography{../ref}                % assuming yours is named ref.bib
+
+
+\end{document}
