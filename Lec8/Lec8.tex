@@ -1,0 +1,241 @@
+\documentclass[12pt]{article}
+\usepackage[english]{babel}
+\usepackage[utf8x]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{../scribe}
+\usepackage{listings}
+
+\usepackage{hyperref}
+% \usepackage{cleveref}
+\usepackage{xcolor}
+\usepackage{natbib}
+\usepackage{tikz}
+\renewcommand{\arraystretch}{1.5}
+\usepackage{nicefrac}
+% \newcommand{\thetahat}{\widehat{\theta}}
+% \Scribe{Shubhanshu Shekhar}
+\Lecturer{Shubhanshu Shekhar}
+\LectureNumber{8}
+\LectureDate{23rd September, 2025}
+\LectureTitle{Method for Minimax Lower Bounds III}
+
+\lstset{style=mystyle}
+% \usepackage{tikz}
+\usepackage{comment}
+% \usepackage{pgfplots}
+% \usepackage{enumitem}
+\input{../preamble}
+\input{../newMacros}
+
+
+\begin{document}
+	\MakeScribeTop
+%#############################################################
+%#############################################################
+%#############################################################
+%#############################################################
+
+
+In this lecture, we will consider a new technique of deriving minimax lower bounds in statistical estimation problems, often called \emph{Assouad's} method. 
+
+The idea in this scheme is a reduction from estimation problem~(or more generally, some decision-making task) to that of \emph{multiple binary hypothesis testing} problems. Equivalently, it reduces the general estimation problem to that of estimating a parameter in the \emph{Hamming cube} of appropriate dimension. 
+This reduction is obtained under a ``separability assumption'', that states that the loss function under consideration can be lower-bounded in terms of the Hamming distance between two associated binary vectors. 
+
+One important class of applications well-suited to this approach is \emph{interactive or adaptive sensing} problems. For the non-adaptive case, there are generally no benefits~(in terms of rates) to using Assouad's method over some version of Fano's method that we will study next week. 
+
+\section{General Scheme} 
+\label{sec:assouad-general}
+We work in the usual setting for minimax estimation. Let $\calX$ denote some observation space, and let $\{P_\theta: \theta \in \Theta\}$ represent a statistical model/experiment with an associated parameter space $(\Theta, \rho)$, endowed with a pseudo-metric $\rho$. Furthermore, let $\Phi: \mathbb{R}_+ \to \mathbb{R}_+$, denote a non-increasing function. Then, the minimax risk associated with this scenario be defined as 
+\begin{align}
+	R(\Theta, L)  \defined \inf_{\thetahat} \, \sup_{\theta \in \Theta}\, \mathbb{E}_{X\sim P_{\theta}}\lb L\big( \thetahat(X), \theta \big) \rb, \qtext{where} L(\theta, \theta') =  \Phi \circ \rho(\theta, \theta'). 
+\end{align} 
+Recall, that $\thetahat$ represents both deterministic and possibly randomized estimators $P_{W|X}$. 
+
+\paragraph{Separability Condition.} Assouad's method relies on a so-called \emph{Hamming separability} condition that can be summarized in terms of the following two points: 
+\begin{itemize}
+	\item There exists a collection of distribution $\calV_d \subset \calP(\calX)$, with $\calV_d = \{P_v: v \in \calH_d\}$, with associated parameters $\{\theta_v: v \in \calH_d\}$. Here $\calH_d = \{-1, +1\}^d$ denotes the \emph{Hamming cube} in $d$-dimensions. 
+
+	\item There exists an \emph{encoding function} $E: \Theta \to \calH_d$, that maps elements of $\Theta$ to the Hamming cube. Furthermore, this encoding map is such that $E(\theta_v) = v$ for all $v \in \calH_d$. 
+\end{itemize}
+Then, for any $\theta \in \Theta$ and $v \in \calH_d$, we have 
+	\begin{align}
+		L\lp \theta, \theta_v \rp \geq 2 \delta \sum_{j=1}^d \boldsymbol{1} \{E(\theta)[j] \neq v[j]\} = 2 \delta \,d_{H}\lp E(\theta),  v \rp,  \label{eq:hamming-separability}
+	\end{align}
+	where $d_H(\cdot, \cdot)$ is the Hamming metric.
+\begin{example}
+	\label{example:separability-condition-assouad} The condition~\eqref{eq:hamming-separability} if often satisfied when $\Theta = \mathbb{R}^d$, $\rho$ is the metric induced by an $\ell_p$ norm, and $\Phi(t) = |t|^p$  for $p \geq 1$. For example, consider the encoding map, $E: \mathbb{R}^d \to \calH_d$, that is defined as follows:  
+	\begin{align}
+		E(\theta)[j] = \mathrm{sign}(\theta[j]) = \begin{cases}
+			+1, & \text{ if } \theta[j] \geq 0, \\
+			-1, & \text{ if } \theta[j] < 0.
+		\end{cases}
+	\end{align}
+	We can think of $E$ as the one-bit quantizer of the parameter $\theta$. 
+	Define $\theta_v = \delta \, v$ for some $\delta>0$ and for all $v \in \calH_d$. Then, for any $\theta \in \Theta = \mathbb{R}^d$, and $v \in \calH_d$, we have  
+	\begin{align}
+		\Phi \circ \rho(\theta, \theta_v) &= \|\theta - \theta_v\|_p^p = \sum_{j=1}^d|\theta[j]-\theta_v[j]|^{p} \geq \delta^{p} \sum_{j=1}^d \boldsymbol{1}\{ E(\theta)[j]\neq v[j]\} \\
+		& = \delta^{q/p} d_H(E(\theta), v). 
+	\end{align}
+	In other words, for all values of $p \geq 1$, the problem described above satisfies a $\delta^{p}$-Hamming-separability condition. 
+\end{example}
+
+
+To state the key idea of this method, we need to introduce some notation. Recall that we have a collection of distributions $\{P_v: v \in \calH_d\}$. Suppose $V \sim \mathrm{Uniform}(\calH_d)$ is a random variable that is uniformly distributed over the Hamming cube, and suppose our observation $X \sim P_V$. That is, the conditional distribution of $X$ given $V=v$ is $P_v$ for every $v \in \calH_d$. The unconditional distribution of $X$ is the uniform mixture of all $P_v$, with $v \in \calH_d$. We will use $P_{+j}$~(resp. $P_{-j}$) to denote the conditional distribution of $X$, given that $V[j] = +1$~(resp. $V[j]=-1$). 
+
+\begin{theorem}
+	\label{theorem:assouad}	Suppose the $2\delta$-Hamming separation condition is satisfied. Then, we have the following: 
+	\begin{align}
+		R(\Theta, L) &= \inf_{\thetahat} \sup_{\theta \in \Theta} \mathbb{E}_{X\sim P_\theta}\lb \Phi \circ \rho \lp \thetahat(X), \theta\rp \rb 
+		 \geq \delta \sum_{j=1}^d \lp 1 - TV(P_{+j},  P_{-j}) \rp. \label{eq:assouad-main-1}
+	\end{align}
+\end{theorem}
+\begin{remark}
+	Informally, this result says the following: the minimax risk can be lower-bounded by the minimax risk over a subset of parameters $\{\theta_v = \delta v: v \in \calH_d\}$. This lower minimax risk cannot be smaller than the average risk, with the parameter $V \sim \mathrm{Uniform}(\calH_d)$. Finally, the average risk can be further lower-bounded by the error of $d$ hypothesis testing problems about the sign of the $j^{th}$ coordinate, with $j \in [d]$. 
+
+	The separability condition essentially allows us to independently apply the two-point method to each coordinate of $V$, resulting in the bound stated in~\eqref{eq:assouad-main-1}. 
+\end{remark}
+\emph{Proof of~Theorem~\ref{theorem:assouad}.} The starting point of the proof is the usual step that bounds the maximum with the average. In this instance, we consider $V \sim \uniform(\calH_d)$, and observe that 
+	\begin{align}
+		R(\Theta, L) & \geq \inf_{\thetahat} \mathbb{E}_{V} \lb \mathbb{E}_{X \sim P_V} \lb \Phi \circ \lp \thetahat(X), \theta(P) \rp\rb\rb && (\max \geq \mathrm{average}) \\
+		& \geq 2\delta \inf_{\thetahat} \mathbb{E}_{V}\lb \mathbb{E}_{X \sim P_V} \lb d_H\lp E(\thetahat(X)), V \rp \rb \rb && (\mathrm{Hamming\text{-}Separation}) \\
+	\end{align}
+	Now, the estimator $\thetahat$ only influences the last expression through its composition with $E$. Hence, we can get a further lower bound by taking an infimum over all $\psi:\calX \to \calH_d$
+	\begin{align}
+			R(\Theta, L) & \geq 	
+			2\delta \inf_{\psi:\calX \to \calH_d} \mathbb{E}_{V}\lb \mathbb{E}_{X \sim P_V} \lb d_H\lp \psi(X), V \rp \rb \rb.  
+	\end{align}
+	On expanding the RHS, we get 
+	\begin{align}
+		R(\Theta, L) & \geq 2 \delta \inf_{\psi} \, \frac{1}{2^d} \sum_{v \in \calH_d} \sum_{j=1}^d P_v(\psi(X)[j] \neq v[j]) \\ 
+		& \geq 2 \delta \sum_{j=1}^d \inf_{\psi_j:\calX \to \{\pm 1\}} \frac{1}{2^d} \lp \sum_{v:v[j]=+1} P_v\lp \psi_j(X) = -1 \rp + \sum_{v:v[j]=-1} P_v\lp \psi_j(X) = +1 \rp \rp \\
+		& = 2 \delta  \sum_{j=1}^d \inf_{\psi_j} \frac 1 2 \lp P_{+j}\lp \psi_j(X)=-1 \rp  + P_{-j}\lp \psi_j(X)=+1 \rp\rp \label{eq:assouad-proof-1}
+	\end{align}
+	In the last equality, we used the fact that  for any event $G$, we have 
+	\begin{align}
+		P_{+j}(G) &= \mathbb{P}\lp G \mid V[j]=+1 \rp = \frac{\mathbb{P}\lp G \cap\{ V[j]=+1\} \rp}{\mathbb{P}(V[j]=+1)} \\
+		& = 2 \mathbb{P}\lp G \cap \{V[j] = +1\} \rp && (\text{since } \mathbb{P}(V[j]=+1)=1/2) \\
+		& = 2 \sum_{v:v[j]=+1} \mathbb{P}\lp G \cap \{ V = v\} \rp \\
+		& = 2 \sum_{v: v[j]=+1} \mathbb{P}(V=v) P_v(G) \\
+		& = 2\; \frac{1}{2^d} \sum_{v: v[j]=+1} P_v(G). && (\text{since } V\sim\uniform(\calH_d))
+	\end{align}
+	A exactly similar calculation  gives us the $P_{-j}$ term in~\eqref{eq:assouad-proof-1}. 
+
+	Picking up from~\eqref{eq:assouad-proof-1}, we have 
+	\begin{align}
+		R(\Theta, L) & \geq \delta \sum_{j=1}^d \inf_{\psi_j} \lp 1 - \lp P_{+j}(\psi_j(X)=+1) + P_{-j}(\psi_j(X)=+1) \rp\rp \\
+		& =  \delta \sum_{j=1}^d  \lp 1 - \sup_{\psi_j}\lp P_{+j}(\psi_j(X)=+1) - P_{-j}(\psi_j(X)=+1) \rp\rp \\
+		& = \delta \sum_{j=1}^d  \lp 1 - \sup_{G \in \calF_{\calX}}\lp P_{+j}(G) - P_{-j}(G) \rp\rp \\
+		& =  \delta \sum_{j=1}^d \lp 1 - TV(P_{+j}, P_{-j}) \rp. 
+	\end{align}
+	Note that in the second equality above, we have used the fact that we can restrict our attention to non-randomized hypothesis tests $\psi_j$, and thus a $\sup$ over all $\psi_j$ is equivalent to a $\sup$ over all measurable sets $G \in \calF_{\calX}$. 
+	This completes the proof. 
+\hfill\qedsymbol
+
+\paragraph{Some Simplifications.} In order to apply this technique to a given problem, we will need to get some control over the terms $TV(P_{+j}, P_{-j})$ for $j \in [d]$. Both $P_{+j}$  and $P_{-j}$ are uniform mixtures of $2^{d-1}$ distributions each, which implies
+\begin{align}
+\left\lVert \frac{1}{2^{d-1}} \sum_{v:v[j]=+1} P_v - \sum_{u:u[j]=-1} P_u \right\rVert_{TV} & \leq \frac{1}{2^{d-1}} \frac{1}{2^{d-1}} \sum_{v:v[j]=1} \sum_{u:u[j]=-1} TV(P_v,  P_u)
+\end{align}
+due to convexity of the total-variation distance in each of its arguments. A simple, but sometimes too crude, idea is to use the bound $TV(P_v,  P_u) \leq \max_{u, v} TV(P_v,  P_u)$, to get 
+\begin{align}
+	R(\Theta, L) \geq  \delta \lp 1-  \max_{\substack{v:v[j]=+1 \\ u:u[j]=-1}} TV(P_v,  P_u) \rp. \label{eq:assouad-main-2}
+\end{align}
+
+Another approach uses the Cauchy-Schwarz inequality to get 
+\begin{align}
+	\sum_{j=1}^d \lp 1 - TV(P_{+j},  P_{-j}) \rp &= d - \sum_{j=1}^d 1 \times TV(P_{+j},  P_{-j}) \\
+	& \geq d - \sqrt{d} \lp \sum_{j=1}^d  TV(P_{+j},  P_{-j})^2 \rp^{1/2} \\
+	& \geq d \lp 1 - \lp \frac{1}{d 2^{d}} \sum_{j=1}^d\sum_{v \in \calH_d} TV(P_{v, +j},  P_{v, -j})^2 \rp^{1/2}  \rp.  \label{eq:assouad-main-3}
+\end{align}
+In the last inequality, we used the convexity of TV distance, and the notation $P_{v, +j}$ is equal to $P_v$ if $v[j]=+1$, otherwise it is equal to $P_{v'}$, where $v'[j]=+1$ and $v'[i]=v[i]$ for all $i \neq j$. 
+
+Finally, often it may be easier to work with other distance/divergence measures, and we can use the following inequalities to replace the occurrence of every $TV(\cdot, \cdot)$: 
+\begin{align}
+	TV(P, Q)^2  &\leq H^2(P, Q) \leq \dkl(P \parallel Q)  \leq \log \lp 1 + \chi^2(P \parallel Q) \rp. 
+\end{align}
+Plugging either of these into~\eqref{eq:assouad-main-1}, \eqref{eq:assouad-main-2}, or~\eqref{eq:assouad-main-3}  might result in a more tractable form depending on the problem structure. 
+
+\section{Application to Linear Regression with Adaptive Sensing}
+\label{sec:assouad-adaptive-sensing}
+
+Consider a regression problem with the parameter space $\Theta = \mathbb{R}^d$, and let $\rho$ denote the $\ell_2$ norm with $\Phi(t) = t^2$. Now suppose we have $n$ observations of the form 
+\begin{align}
+Y_t = \langle A_t, \theta \rangle + \sigma \varepsilon_t, \qtext{where} A_t \text{ is } \calF_{t-1}\text{-measurable with }   \|A_t\|_2 \leq 1, \quad \varepsilon_t \overset{\iid}{\sim} N(0, 1).  
+\end{align}
+In other words, we collect $n$ observations via adaptive measurements under a power constraint. The goal is to use $\X = (Y_1, \ldots, Y_n)$ to construct an estimate of the unknown parameter $\theta$. The minimax risk in this case is 
+\begin{align}
+R_n \equiv R_n(\Theta, L) = \inf_{\thetahat, \calA} \sup_{\theta \in \Theta} \|\thetahat(\X) - \theta\|_2^2, 
+\end{align}
+where $\calA$ denotes the adaptive sensing policy. In order to apply Assouad's method to this problem, we will select the encoding map: $E:\Theta \to \calH_d$, such that $E(\theta)[j] = \mathrm{sign}(\theta[j])$ for all $j \in [d]$. Then, from~Example~\ref{example:separability-condition-assouad}, we know that with $\theta_v = \delta v$ for all $v \in \calH_d$, we have 
+\begin{align}
+\|\theta - \theta_v\|_2^2 \geq \delta^2 d_H(E(\theta), v). 
+\end{align}
+Hence, we have a $\delta^2$-Hamming separation condition. Now, in this problem, we will use $P_\theta \equiv P_{\theta, \calA}$ to denote the joint distribution of the random variables: 
+\begin{align}
+(A_1, Y_1, A_2, Y_2, \ldots, A_n, Y_n) \sim P_{\theta} \equiv P_{\theta, \calA}. 
+\end{align}
+Recall that $\calA$ represents the adaptive sensing strategy, which is a sequence of conditional distributions $P_{A_t|A^{t-1}, Y^{t-1}}$ for $t \in [n]$. 
+
+
+Using Theorem~\ref{theorem:assouad}, we get that 
+\begin{align}
+R_n \geq  \frac{\delta^2}{2} \sum_{j=1}^d \lp 1 - TV(P_{+j}, P_{-j}) \rp \;\stackrel{\text{Pinsker's}}{\geq}\; \frac{\delta^2}{2} \sum_{j=1}^d \lp 1 - \sqrt{\frac 1 2 \dkl(P_{+j} \parallel P_{-j})} \rp.  \label{eq:assouad-application-1}
+\end{align}
+The next step is to get an upper bound on the relative entropy between $P_{+j}$ and $P_{-j}$. To do this, we need to introduce the following terms: 
+\begin{align}
+v^{(j)} = 
+\begin{cases}
+	v[i], & \text{ if } i \neq j \\
+	-v[i], & \text{ if } i=j,
+\end{cases}
+\quad 
+v^{(+j)} = 
+\begin{cases}
+	v[i], & \text{ if } i \neq j \\
+	+1, & \text{ if } i=j,
+\end{cases}
+\quad 
+v^{(-j)} = 
+\begin{cases}
+	v[i], & \text{ if } i \neq j \\
+	-1, & \text{ if } i=j,
+\end{cases}
+\end{align}
+Then, we have 
+\begin{align}
+\dkl(P_{+j} \parallel P_{-j}) &= \dkl \lp \frac{1}{2^{d-1}} \sum_{v:v[j]=+1} P_v \parallel \frac{1}{2^{d-1}} \sum_{v:v[j]=-1} P_v \rp \\
+&= \dkl \lp \frac{1}{2^{d}} \sum_{v \in \calH_d} P_{v^{(+j)}} \parallel \frac{1}{2^{d}} \sum_{v \in \calH_d} P_{v^{(-j)}} \rp
+\end{align}
+The last term is simply the relative entropy between two mixture distributions, and due to the joint-convexity property, it implies 
+\begin{align}
+\dkl(P_{+j} \parallel P_{-j}) \leq \frac{1}{2^d} \sum_{v \in \calH_d} \dkl(P_{v^{(+j)}} \parallel P_{v^{(-j)}}) \leq \max_{v \in \calH_d} \dkl(P_{v^{(+j)}} \parallel P_{v^{(-j)}}). 
+\end{align}
+Now, let $f_{\sigma^2}(y, \mu)$ denote the cdf of a Normal distribution with mean $\mu$ and variance $\sigma^2$ at $y$, and observe that 
+\begin{align}
+\dkl(P_{v^{(+j)}} \parallel P_{v^{(-j)}}) &= \mathbb{E}_{P_{v^{(+j)}}}\lb \log \lp \prod_{t=1}^n \frac{p_{A_t|H_{t-1}} f_{\sigma^2}(Y_t, \langle \theta_{v^{(+j)}}, A_t \rangle) }{p_{A_t|H_{t-1}} f_{\sigma^2}(Y_t, \langle \theta_{v^{(-j)}}, A_t \rangle )) } \rp\rb  \\
+&= \mathbb{E}_{P_{v^{(+j)}}}\lb \sum_{t=1}^n \log \lp  \frac{f_{\sigma^2}(Y_t, \langle \theta_{v^{(+j)}}, A_t \rangle) }{f_{\sigma^2}(Y_t, \langle \theta_{v^{(-j)}}, A_t \rangle )) } \rp\rb  \\
+& = \sum_{t=1}^n \mathbb{E}_{P_{v^{(+j)}}} \lb \mathbb{E}_{P_{v^{(+j)}}}\lb \frac{\langle \theta_{v^{(+j)}} - \theta_{v^{(-j)}}, A_t \rangle^2}{2 \sigma^2} \middle\vert A_t \rb \rb \leq n \frac{4 \delta^2}{2 \sigma^2}, \label{eq:assouad-application-2}
+\end{align}  
+where in the last inequality we used Cauchy-Schwarz to get $\langle \theta_{v^{(+j)}} - \theta_{v^{(-j)}}, A_t \rangle^2 \leq \| \theta_{v^{(+j)}} - \theta_{v^{(-j)}}\|^2 \|A_t\|^2$, and then the power constraint $\|A_t\| \leq 1$~(almost surely). 
+
+Using~\eqref{eq:assouad-application-2} in~\eqref{eq:assouad-application-1}, we get 
+\begin{align}
+R_n \geq \frac{d \, \delta^2}{2} \lp 1 - \frac{2 n \delta^2}{\sigma^2} \rp. 
+\end{align}
+Finally, we complete the proof by selecting $\delta^2 = \sigma^2/4n$ which gives us 
+\begin{align}
+R_n \geq  \frac{\sigma^2 d}{16 n}. 
+\end{align}
+
+\begin{remark}
+\label{remark:kl-bounding}
+	Note that this result tells us that in a minimax sense, adaptive sensing does not lead to an improvement in estimation performance without further assumptions or structure.  For example, as an extreme case, suppose we relaxed the power constraint, and assumed that the true $\theta$ has only one non-zero element, then this task reduces to a noisy binary testing problem. In this case, adaptive methods can lead to significantly better error.
+\end{remark}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \newpage
+% \bibliographystyle{abbrvnat}           % if you need a bibliography
+% \bibliography{../ref}                % assuming yours is named ref.bib
+
+
+\end{document}
