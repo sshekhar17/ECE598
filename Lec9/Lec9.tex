@@ -1,0 +1,206 @@
+\documentclass[12pt]{article}
+\usepackage[english]{babel}
+\usepackage[utf8x]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{../scribe}
+\usepackage{listings}
+
+\usepackage{hyperref}
+% \usepackage{cleveref}
+\usepackage{xcolor}
+\usepackage{natbib}
+\usepackage{tikz}
+\renewcommand{\arraystretch}{1.5}
+\usepackage{nicefrac}
+% \newcommand{\thetahat}{\widehat{\theta}}
+% \Scribe{Shubhanshu Shekhar}
+\Lecturer{Shubhanshu Shekhar}
+\LectureNumber{9}
+\LectureDate{25th September, 2025}
+\LectureTitle{Minimax Lower Bounds IV}
+
+\lstset{style=mystyle}
+% \usepackage{tikz}
+\usepackage{comment}
+% \usepackage{pgfplots}
+% \usepackage{enumitem}
+\input{../preamble}
+\input{../newMacros}
+
+
+\begin{document}
+	\MakeScribeTop
+%#############################################################
+%#############################################################
+%#############################################################
+%#############################################################
+
+
+In the previous lecture, we introduced a method for obtaining minimax lower bounds proceeds by reducing estimation to multiple binary hypothesis tests. We will now discuss how this idea is convenient for studying the minimax regret in interactive decision-making problems.  
+
+\section{Interactive Decision-Making Problems} 
+\label{sec:interactive-decision-making}
+
+Consider a collection of distributions $\{P_{\theta, a}: \theta \in \Theta, \text{ and } a \in \calA\}$ indexed by a parameter space $\Theta$ and an ``action space'' $\calA$. 
+We take the perspective of an agent whose goal is to interactively select actions $A_1, A_2, \ldots, A_n$ according to a policy $\pi \equiv (\pi_1, \ldots, \pi_n)$, where $\pi_t(\cdot \mid H_{t-1}) = P_{A_t|H_{t-1}}$ is a stochastic kernel or conditional probability distribution of the $t^{th}$ action $A_t$ given the history $H_{t-1} = (A_1, X_1, \ldots, A_{t-1}, X_{t-1})$. In each round, having selected the action $A_t$, the agent observes $X_t \sim P_{\theta, A_t}$. Finally, at the end of $n$ rounds of interaction, the agent may optionally make a terminal decision according to the rule $\rho \equiv P_{W|H_n}$. In many cases, the terminal decision also lies in the same action space $\calA$, and we will work under this simplifying assumption for the rest of this lecture. This interaction protocol is summarized in~Algorithm~1. 
+\vspace{1em}
+
+\begin{algorithm}[H]
+	\label{algo:interaction-protocol}
+	\For{$t=1$ \KwTo $n$}{
+	  agent samples $A_t \sim \pi_t(\cdot \mid H_{t-1})$ \;
+	  agent observe $X_t \sim P_{\theta, A_t}$ \;
+	  update history $H_t \leftarrow (H_{t-1}, A_t, X_t)$ \;
+	}
+	((Optional)) decision $A_{n+1} \sim \rho(\cdot \mid H_n)$ 
+	\caption{ Interaction protocol (stateless)}
+\end{algorithm}
+
+\vspace{1em}
+We will focus mainly on two types of problems: 
+\begin{description}
+	\item[Regret minimization.] 
+	 In each round, the agent incurs a loss according to some loss function $\ell: \calX \times \calA \to \mathbb{R}$. The expected loss~(or risk) associated with an action $a \in \calA$ and parameter $\theta \in \Theta$, and an optimal action associated with $\theta \in \Theta$ are defined as 
+	\begin{align}
+		L(\theta, a) = \mathbb{E}_{X \sim P_{\theta, a}}[\ell(X, a)], \quad a^*(\theta) \in \argmin_{a \in \calA} L(\theta, a). 
+	\end{align}
+	Finally, this can be used to define the regret associated with a policy $\pi$ as 
+	\begin{align}
+	\mathrm{Reg}_n(\pi, \theta) = \mathbb{E}_{(\theta, \pi)} \lb \sum_{t=1}^n L(\theta, A_t)  - L(\theta, a^*(\theta))\rb =  \mathbb{E}_{(\theta, \pi)} \lb \sum_{t=1}^n \ell(X_t, A_t) - \ell(X_t, a^*(\theta)) \rb. 
+	\end{align}
+	In the regret minimization problem, there is no terminal action $\rho$. The goal is to simply study the minimax regret 
+	\begin{align}
+	\mathrm{Reg}_n(\calA, \Theta) = \inf_{\pi} \sup_{\theta \in \Theta} \mathrm{Reg}_n(\pi, \theta).  \label{eq:minimax-regret}
+	\end{align} 
+
+	\item[Pure Exploration.] In pure exploration, after the completion of $n$ rounds, the agent outputs $A_{n+1} \sim \rho(\cdot \mid H_n)$, and incurs a pure-exploration risk of 
+	\begin{align}
+		r_n(\pi, \rho,  \theta) = \mathbb{E}_{(\theta, \pi, \rho)}\lb L(\theta, A_{n+1}) - L(\theta, a^*(\theta)) \rb. 
+	\end{align} 
+	This can be used to then define the minimax pure-exploration risk 
+	\begin{align}
+	r_n(\pi, \rho, \Theta) = \inf_{\pi, \rho} \sup_{\theta \in \Theta} \, r_n(\pi, \rho, \theta). \label{eq:minimax-pure-exploration-risk}
+	\end{align}
+\end{description}
+We now make a simple observation that will allow us to relate the minimax lower bounds on pure-exploration risk to that of regret. In particular, from any given sampling policy $\pi$, we can obtain a terminal decision rule $\rho_\pi$ as 
+\begin{align}
+\rho_{\pi}(\cdot \mid H_n) = \frac{1}{n} \sum_{t=1}^n \pi_t(\cdot \mid H_{t-1}). 
+\end{align}
+This terminal decision rule is simply the average of all the sampling distributions. The pure-exploration risk associated with this rule then, is equal to 
+\begin{align}
+r_n(\pi, \rho_\pi, \theta) &= \mathbb{E}_{(\theta, \pi, \rho_\pi)}\lb L(\theta, A_{n+1}) - L(\theta, a^*(\theta)) \rb = \frac{1}{n} \sum_{t=1}^n \mathbb{E}_{(\theta, \pi)} \lb L(\theta, A_t) - L(\theta, a^*(\theta))\rb \\ &= \frac{1}{n} \mathrm{Reg}_n(\pi, \theta). \label{eq:pe-vs-regret-1}
+\end{align}
+This fact leads to the following simple observation. 
+\begin{proposition}
+\label{prop:pe-to-regret} The following is true: 
+\begin{align}
+\inf_{\pi, \rho} \sup_{\theta} r_n(\pi, \rho, \theta) \geq \psi_n \quad \implies \quad \inf_{\pi} \sup_{\theta} \mathrm{Reg}_n(\pi, \theta) \geq n \psi_n. 
+\end{align}
+In other words, establishing a minimax lower bound on the pure-exploration risk also gives us a lower bound on the minimax regret. 
+\end{proposition}
+\begin{proof}
+The proof of this result is immediate from our earlier discussion: 
+\begin{align}
+\inf_{\pi, \rho} \sup_{\theta} r_n(\pi, \rho, \theta) \leq \inf_{\pi, \rho_{\pi}} \sup_{\theta} r_n(\pi, \rho_\pi, \theta) = \inf_{\pi } \sup_{\theta} \frac{1}{n} \mathrm{Reg}_n(\pi, \theta). 
+\end{align}
+The  inequality is due to the restriction of $\rho$ to $\rho_\pi$, and the equality follows from~\eqref{eq:pe-vs-regret-1}. 
+\end{proof}
+
+
+% \section{Examples}
+
+\section{Application to Linear Bandits}
+\label{sec:linear-bandits}
+Our first example is the problem  of linear bandits. In this case, we have $\Theta= \calA = \{x \in \mathbb{R}^d: \|x\|_2 \leq 1\}$, and assume that $P_{\theta, a} = N(\langle \theta, a \rangle, \sigma^2)$. This is equivalent to the observation model 
+\begin{align}
+X_t = \langle \theta, A_t \rangle + \sigma \varepsilon_t, \qtext{where} (\varepsilon_t)_{t=1}^n \overset{\iid}{\sim} N(0,1). 
+\end{align}
+The risk  and  optimal action are defined as 
+\begin{align}
+L(\theta, a) = \mathbb{E}[-\langle a, X\rangle] = -\langle a, \theta \rangle, \qtext{which means} 
+a^*(\theta) = \argmax_{a:\|a\|_2 \leq 1} \langle a, \theta \rangle = \theta/\|\theta\|. 
+\end{align}
+The worst-case risk associated with a policy $\pi$ and decision rule $\rho$ in linear bandits is defined as 
+\begin{align}
+r_n(\pi, \rho, \Theta) = \sup_{\theta \in \Theta} \mathbb{E}_{(\theta, \pi, \rho )}\lb -\langle A_{n+1}, \theta \rangle + \|\theta\| \rb, 
+\end{align}
+where we used the fact that $a^*(\theta) = \theta/\|\theta\|$. We will obtain a lower bound on this using Assouad's method. 
+
+\paragraph{Indexed parameter class.} The first step is to identify a class of problem instances~(parameters) indexed by the Hamming cube. We do this by fixing a $\delta \in (0, 1)$ whose exact value will be specified later, and then defining
+\begin{align}
+\theta_v = \frac{\delta}{\sqrt{d}} v, \qtext{for all} v \in \calH_d = \{-1, +1\}^d. 
+\end{align}
+The $\sqrt{d}$ term in the denominator ensures that $\|\theta_v\| \leq \delta \leq 1$. As in the previous lecture, we will use $v^{(j+)}$, $v^{(j-)}$ to denote elements of $\calH_d$ that agree with $v$ on all coordinates $i \neq j$, and have $+1$~(resp. $-1$) in the $j^{th}$ coordinate. 
+
+\paragraph{Class of Joint Distributions.} Let us fix a pair of $(\pi, \rho)$, and denote the set of joint distributions $Q_\theta \equiv Q_{\theta, \pi, \rho}$ such that for any $(h_n, a_{n+1})$, we have  
+\begin{align}
+Q_{\theta}(h_n, a_{n+1}) =  \pi_1(a_1)  P_{\theta, a_1}(x_1) \pi_2(a_2 \mid h_1) P_{\theta, a_2}(x_2) \ldots \pi_n(a_n \mid h_{n-1}) P_{\theta, a_n}(x_n) \rho(a_{n+1} \mid h_{n}). 
+\end{align}
+For any $v \in \calH_d$, we will use the notation $Q_{v}$ to denote $Q_{\theta_v} \equiv Q_{\theta_v, \pi, \rho}$.  
+
+\paragraph{Hamming Separation Condition.} To apply Assouad's method, we need to verify that the problem instances satisfy the Hamming separation condition. In particular, let $E:\calA \to \calH_d$ denote the ``sign encoding map'' satisfying $E(\theta_v) = v$ for all $v \in \calH_d$, and observe that 
+\begin{align}
+L(\theta_v, a) - L(\theta_v, a^*(\theta_v)) = \langle \theta_v, a^*(\theta_v) - a \rangle \geq \sum_{j=1}^d 
+\end{align}
+To see why the inequality holds, note that 
+\begin{align}
+\langle \theta_v, a^*(\theta_v) - a \rangle &= \sum_{j=1}^d \theta_v[j] \lp a^*(\theta_v)[j] - a[j] \rp 
+ = \sum_{j=1}^d \frac{\delta v[j]}{\sqrt{d}} \lp \frac{v[j]}{\sqrt{d}} - a[j] \rp. 
+\end{align}
+In the second equality, we used the fact that $a^*(\theta_v) = v/\sqrt{d}$. This can be rewritten as 
+\begin{align}
+\langle \theta_v, a^*(\theta_v) - a \rangle = \delta - \delta \frac{\langle v, a\rangle}{\sqrt{d}} = \delta \lp 1 - \frac{\langle v, a \rangle }{\sqrt{d}} \rp. 
+\end{align}
+Now, let $m$ denote the Hamming distance between $E(a)$ and $v$; that is, $m$ is the number of coordinates in which the sign of $a$ and $v$ differ. Then, we can bound $\langle v, a \rangle$ with 
+\begin{align}
+\langle v, a \rangle \leq \sup_{a' \in \calA: d_H(E(a'), v) = m} \langle v, a' \rangle = \sqrt{d -m}. 
+\end{align}
+The supremum is achieved by an $a'$ that places $0$~(or arbitrarily small) mass on the coordinates at which signs of $v$ and $a$ differ, and equal mass on the remaining points. Hence, we have obtained 
+\begin{align}
+\langle \theta_v, a^*(\theta_v) - a \rangle = \delta \lp 1 - \frac{\langle v, a \rangle }{\sqrt{d}} \rp \geq \delta \lp 1 - \sqrt{1 - \frac{m}{d}} \rp, \qtext{where} m = d_H(E(a), \theta_v).  
+\end{align}
+Finally, we use the fact that with $x = m/d \in [0,1]$, we have 
+\begin{align}
+\lp 1 - \frac{x}{2} \rp^2 = 1 - x + \frac{x^2}{4} \geq 1 - x \quad \implies \quad 1 - \frac x 2 \geq \sqrt{1 - x} \quad \implies \quad 1 - \sqrt{1-x} \geq \frac{x}{2}.  
+\end{align}
+This gives us the required Hamming separation condition 
+\begin{align}
+\langle \theta_v, a^*(\theta_v) - a \rangle \geq \frac{\delta}{2d} d_H(v, E(a)). 
+\end{align}
+
+\paragraph{Applying Assouad's Lemma.} We can now apply the version of Assouad's Lemma along with Pinsker's to conclude that 
+\begin{align}
+\sup_{\theta} r_n(\pi, \rho, \theta) &\geq \frac{\delta}{4d} \sum_{j=1}^d \lp 1 - TV(Q_{j+}, Q_{j-}) \rp  = \frac{\delta}{4} \lp 1 - \frac{1}{d} \sum_{j=1}^d TV(Q_{j+}, Q_{j-}) \rp \\ 
+& \geq \frac{\delta}{4} \lp 1 - \frac{1}{\sqrt{d}}  \times \lp \sum_{j=1}^d TV(Q_{j+}, Q_{j-})^2 \rp^{1/2} \rp \\
+& \geq \frac{\delta}{4} \lp 1 - \frac{1}{\sqrt{d}}  \times \lp \frac{1}{2}\sum_{j=1}^d \dkl(Q_{j+}, Q_{j-}) \rp^{1/2} \rp 
+\label{eq:assouad-linear-bandit-1}
+\end{align}
+Now, the standard decomposition of the relative entropy under adaptive sampling tells us 
+\begin{align}
+\dkl(Q_{v^{(j+)}} \parallel Q_{v^{(j-)}}) &= \sum_{t=1}^n \mathbb{E}_{Q_{v^{(j+)}}} \lb \frac{ ( \langle A_t, \theta_{v^{(j+)}} - \theta_{v^{(j-)}} \rangle )^2}{2 \sigma^2} \rb = \frac{2 \delta^2}{d \sigma^2} \sum_{t=1}^n \mathbb{E}_{Q_{v^{(j+)}}} \lb A_{t}[j]^2 \rb 
+\end{align}
+On summing over $j \in [d]$, and using the fact that $\dkl(Q_{j+} \parallel Q_{j-}) \leq \max_{v} \dkl(Q_{v^{(j+)}} \parallel Q_{v^{(j-)}})$, we get the bound 
+\begin{align}
+\frac{1}{2}\sum_{j=1}^d \dkl(Q_{j+}, Q_{j-}) \leq \frac{2n \delta^2}{d \sigma^2}. 
+\end{align}
+Plugging this into~\eqref{eq:assouad-linear-bandit-1}, we get 
+\begin{align}
+\sup_{\theta} r_n(\pi, \rho, \theta) \geq \frac{\delta}{4} \lp 1 - \frac{\delta \sqrt{n}}{\sigma d }  \rp.  
+\end{align}
+By selecting $\delta = \sigma d/ 2\sqrt{n}$, we get a lower bound on the pure-exploration risk 
+\begin{align}
+\sup_{\theta \in \Theta} r_n(\pi, \rho, \theta) \geq \frac{\sigma d}{16 \sqrt{n}}. 
+\end{align}
+This completes the proof of the lower bound on the pure-exploration risk. By~Proposition~\ref{prop:pe-to-regret} this also implies the bound on the regret 
+\begin{align}
+\inf_{\pi} \sup_{\theta} \mathrm{Reg}_n(\pi, \theta) \geq \frac{\sigma d \sqrt{n}}{16}. 
+\end{align}
+% \subsection{Zeroth-Order Optimization of H\"older Functions}
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \newpage
+% \bibliographystyle{abbrvnat}           % if you need a bibliography
+% \bibliography{../ref}                % assuming yours is named ref.bib
+
+
+\end{document}
