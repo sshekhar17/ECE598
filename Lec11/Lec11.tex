@@ -1,0 +1,280 @@
+\documentclass[12pt]{article}
+\usepackage[english]{babel}
+\usepackage[utf8x]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{../scribe}
+\usepackage{listings}
+
+\usepackage{hyperref}
+% \usepackage{cleveref}
+\usepackage{xcolor}
+\usepackage{natbib}
+\usepackage{tikz}
+\renewcommand{\arraystretch}{1.5}
+\usepackage{nicefrac}
+% \newcommand{\thetahat}{\widehat{\theta}}
+% \Scribe{Shubhanshu Shekhar}
+\Lecturer{Shubhanshu Shekhar}
+\LectureNumber{11}
+\LectureDate{2nd October, 2025}
+\LectureTitle{Minimax Lower Bounds VI: Global Fano}
+
+\lstset{style=mystyle}
+% \usepackage{tikz}
+\usepackage{comment}
+% \usepackage{pgfplots}
+% \usepackage{enumitem}
+\input{../preamble}
+\input{../newMacros}
+
+
+\begin{document}
+	\MakeScribeTop
+%#############################################################
+%#############################################################
+%#############################################################
+%#############################################################
+In this lecture, we conclude our module on deriving minimax lower bounds by discussing the global Fano method. We begin our discussion by introducing a variational definition of mutual information, which we then use to get an upper bound on the mutual information in terms of KL-covering numbers. This naturally leads to our statement of the global Fano method. We end the lecture with some applications that illustrate how this approach allows us to use off-the-shelf metric entropy results to derive minimax lower bounds. 
+
+\section{A variational definition of mutual information}
+Assume that $V \sim \mu$ is some random variable taking values in $\Theta$, and let $X$ have a distribution $P_\theta$ conditioned on $V=\theta$; that is, 
+\begin{align}
+P_X(E) = \int P_\theta(E) d\mu(\theta), \qtext{for all measurable} E \subset \calX. 
+\end{align}
+The mutual information between $V$ and $X$ is defined as 
+\begin{align}
+	I(V; X) & = \dkl(P_{VX} \parallel P_V P_X) = \dkl(P_{X|V} \parallel P_X \mid P_V). 
+\end{align}
+In this section, we will show a variational definition of mutual information. 
+\begin{lemma}
+\label{lemma:mutual-info-variational} Suppose $(X, V)$ are jointly distributed as discussed above. Then, for any distribution $Q$, we have 
+\begin{align}
+I(V; X) \leq \dkl(P_{X|V} \parallel Q \mid P_V), \qtext{with equality iff} Q  = P_X. 
+\end{align}
+This implies the following variational definition of mutual information: 
+\begin{align}
+I(X; V) = \inf_{Q} \dkl(P_{X|V} \parallel Q \mid P_V).  \label{eq:information-variational}
+\end{align}
+\end{lemma}
+
+\begin{proof}
+	We begin with the conditional relative-entropy definition of mutual information:
+	\begin{align}
+	I(V: X) = \dkl(P_{X|V} \parallel P_X \mid P_V) = \int_{\Theta}  D(P_\theta \parallel P_\mu) d\mu(\theta), 
+	\end{align}
+	where $P_X(E) = P_\mu(E)  = \int P_\theta(E) d\mu(\theta)$. Now, let us consider any other distribution $Q$, and for simplicity, assume that there exists some common dominating measure $\nu$ w.r.t. which all $P_\theta$, $P_\mu$, and $Q$ admit densities. Then, we can write: 
+	\begin{align}
+	\int_{\Theta} D(P_\theta \parallel P_\mu) d\mu(\theta) &= \int_{\Theta} d\mu(\theta) \int_{\calX} \log \lp \frac{p_\theta(x)}{p_\mu(x)} \rp p_\theta(x) d\nu(x)  \\
+	&= \int_{\Theta} d\mu(\theta) \lp \int_{\calX} \log \lp \frac{p_\theta(x)}{q(x)} \rp p_\theta(x) d\nu(x)  - \int_{\calX} \log \lp \frac{p_\mu(x)}{q(x)}\rp p_\theta(x)d\nu(x) \rp. 
+	\end{align}
+	The first term in RHS above is simply $\dkl(P_{X|V} \parallel Q \mid P_V)$. For the second term, we can interchange the order of integration~(by appealing to Fubini's theorem) to get 
+	\begin{align}
+	\int_{\Theta} d\mu(\theta) \int_{\calX} \log \lp  \frac{p_\mu(x)}{q(x)}\rp p_\theta(x)d\nu(x) = \int_{\calX}  \log \lp  \frac{p_\mu(x)}{q(x)}\rp d\nu(x) \underbrace{\int_{\Theta} p_\theta(x) d\mu(\theta)}_{= p_\mu(x)}. 
+	\end{align}
+	Thus, the second term is simply the relative entropy between the mixture (or the marginal of $X$) distribution $P_\mu \equiv P_X$, and the distribution $Q$. That is, we have proved that for any $Q$, we have 
+	\begin{align}
+		I(V; X) = \dkl(P_{X|V} \parallel Q \mid P_V) - \dkl(P_X \parallel Q) \leq \dkl(P_{X|V} \parallel Q \mid P_V). 
+	\end{align}
+	Furthermore, the equality is achieved by choosing $Q = P_X = P_\mu$, which implies the second statement: 
+	\begin{align}
+	I(X; V) = \inf_{Q} \dkl(P_{X|V} \parallel Q \mid P_V). 
+	\end{align}
+\end{proof}
+
+\begin{remark}
+\label{remark:information-variational}
+Note that an important concept in information theory is the capacity of a channel~(in this case, the channel is the conditional distribution $P_{X|V}$), defined as 
+\begin{align}
+C(P_{X|V}) = \sup_{P_V} I(X;V) = \sup_{P_V} \inf_{Q} \dkl(P_{X|V} \parallel Q \mid P_V), 
+\end{align}
+where the second equality follows from Lemma~\ref{lemma:mutual-info-variational}. 
+
+Now, assuming that we can interchange the order of $\sup$ and $\inf$ in the definition above~(we will discuss conditions for this to be feasible in a few lectures), we get  the following: 
+\begin{align}
+C(P_{X|V}) =   \sup_{P_V} \inf_{Q} \dkl(P_{X|V} \parallel Q \mid P_V) = \inf_{Q} \sup_{\theta} \dkl(P_\theta \parallel Q),  \label{eq:redundancy-capacity}
+\end{align}
+where in the second equality we used the fact that the objective is linear in $P_V$, and is thus achieved at an extreme point~(i.e., $P_V = \delta_{\theta}$). The quantity in~\eqref{eq:redundancy-capacity} can be interpreted as the value of a two-player game: 
+\begin{itemize}
+	\item Player chooses a distribution $Q$
+	\item Nature or adversary chooses a distribution $P_\theta$, and draws an $X \sim P_\theta$
+	\item The loss incurred by the player~(gain achieved by the adversary) is equal to the relative entropy between $P_\theta$ and $Q$. 
+\end{itemize}
+Then, Lemma~\ref{lemma:mutual-info-variational} implies the value of this game is equal to the capacity of the channel $P_{X|V}$, and the optimal action for the player is the output distribution $P_\mu$ associated with the capacity achieving input distribution $\mu^*$. This is called the Redundancy-Capacity theorem. 
+\end{remark}
+
+
+\section{Global Fano Method}
+\label{sec:global-Fano}
+We now go back to our usual minimax estimation problem. Let $\{P_\theta: \theta \in \Theta\}$ denote a statistical model indexed by a pseudo-metric space $(\Theta, \rho)$. For some non-decreasing function $\Phi: [0,\infty) \to [0, \infty)$, the associated minimax estimation risk is defined as 
+\begin{align}
+R^*(\Theta, \Phi \circ \rho) = \inf_{\thetahat} \sup_{\theta} \mathbb{E}_{\theta}\lb \Phi \circ \rho(\thetahat(X), \theta) \rb.
+\end{align} 
+To present the global Fano bound, we need to introduce the notions of packing and covering numbers. We present these definitions in the exact context they will be used. We begin by introducing the notion of $\delta$-packing number of the parameter space $(\Theta, \rho)$.  
+\begin{definition}
+	\label{def:packing-number} For any $\delta>0$,  the $\delta$-packing number of $(\Theta, \rho)$ is defined as 
+	\begin{align}
+		M_\rho(\Theta, \delta) = \sup \{M: \exists\; \theta_1, \ldots, \theta_M \in \Theta;\; \rho(\theta_i, \theta_j) \geq \delta\}.
+	\end{align}
+	In words, the $\delta$-packing number of $(\Theta, \rho)$ is the cardinality of the largest subset of $\Theta$ whose elements satisfy a pairwise distance~(in terms of $\rho$) of at least $\delta$. 
+\end{definition}
+Next, we introduce the definition of $\epsilon^2$-covering number of a class of probability distributions in terms of relative entropy. 
+\begin{definition}
+	\label{def:covering-number} Let $\calP = \{P_\theta: \theta \in \Theta\}$ denote a collection of probability distributions. Then, the $\epsilon^2$-covering number of $\calP$ is defined as 
+	\begin{align}
+	N_{KL}(\Theta, \epsilon^2) \coloneqq \inf \{N: \exists \; Q_1, \ldots, Q_N; \; \sup_{\theta \in \Theta} \min_{1 \leq i \leq N} \dkl(P_\theta \parallel Q_i) \leq \epsilon^2 \}. 
+	\end{align}
+	In other words, the $\epsilon^2$-covering number of $\calP$ is the size of the smallest subset of $\calP$, such that for any $P \in \calP$, there exists an element in the subset no more than $\epsilon^2$ away from $P$ in relative entropy. 
+\end{definition}
+
+
+We can now proceed toward the derivation of a global Fano lower bound. The first step is to use~Lemma~\ref{lemma:mutual-info-variational} to establish an upper bound on the mutual information in terms of the $\epsilon^2$-covering number. 
+\begin{lemma}
+	\label{lemma:covering-upper-bound} Let $V \sim \mu$ denote a $\Theta$-valued random variable, and let $X \sim P_\mu$~(i.e., $X|V=\theta \sim P_\theta$). Then, we have the following:
+	\begin{align}
+		I(X; V) \leq \inf_{\epsilon>0} \left\{ \epsilon^2 + \log N_{KL}(\Theta, \epsilon^2) \right\}. 
+	\end{align}
+\end{lemma}
+\begin{remark}
+	Note that the upper bound in~Lemma~\ref{lemma:covering-upper-bound} is independent of the choice of the marginal distribution $P_V$. Hence, it is also a valid upper bound after taking a supremum over all $P_V$; that is, it is a valid upper bound on the capacity of the channel~($P_{X|V}$). 
+\end{remark}
+\begin{proof}
+	Let $\{Q_1, \ldots, Q_N\}$ denote an $\epsilon^2$-covering of $\calP = \{P_\theta: \theta \in \Theta\}$, with $N = N_{KL}(\Theta, \epsilon^2)$. Then, Lemma~\ref{lemma:mutual-info-variational} implies the following with $\bar{Q} = (1/N) \sum_{i=1}^N Q_i$:  
+	\begin{align}
+		I(X;V) \leq \dkl(P_{X|V} \parallel \bar{Q} \mid P_V) = \int_{\Theta} d\mu(\theta) \int_{\calX} \log \lp \frac{N p_\theta(x)}{\sum_i q_i(x)} \rp p_\theta(x) d\nu(x), 
+	\end{align}
+	where we have again assumed for simplicity that there exists a common dominating measure $\nu$ on $\calX$. Now, observe that for any $p_\theta$, there exists a $q_{i^*}$ such that $\dkl(P_\theta \parallel Q_{i^*}) \leq \epsilon^2$, which implies 
+	\begin{align}
+		\int_{\calX} \log \lp \frac{N p_\theta(x)}{\sum_i q_i(x)} \rp p_\theta(x)d\nu(x) \leq \log N + \int_{\calX}\log \lp \frac{p_\theta(x)}{q_{i^*}(x)} \rp d\nu(x) \leq \log N + \epsilon^2. 
+	\end{align}
+	In the first inequality, we have simply used the fact that the densities are nonnegative, and thus $q_{i^*}(x) \leq \sum_i q_i(x)$, while the second inequality uses the $\epsilon^2$-covering assumption. This gives us the required upper bound 
+	\begin{align}
+		I(X;V) \leq \int_{\Theta} \lp \log N + \epsilon^2 \rp d\mu(\theta) = \log N + \epsilon^2. 
+	\end{align}
+	Since this statement is true for an arbitrary $\epsilon>0$, the inequality remains valid on taking an infimum over all $\epsilon>0$. 
+\end{proof}
+
+\begin{remark}
+	\label{remark:iid-observations} When working with $n$ \iid observations, the bound of Lemma~\ref{lemma:covering-upper-bound} specializes to 
+	\begin{align}
+		I(V; X^n) \leq \inf_{\epsilon>0}\left\{ \log N_{KL}(\Theta, \epsilon^2) + n \epsilon^2 \right\}. 
+	\end{align}
+	Note that here $N_{KL}$ is the covering number of the distribution class $\{P_\theta: \theta \in \Theta\}$, and the observations are assumed to be drawn from $P_\theta^{\otimes n}$. 
+\end{remark}
+
+We now have all the components to state the Global Fano lower bound. 
+\begin{theorem}
+	\label{theorem:global-fano}
+	Fix any $\epsilon, \delta>0$. Then, the minimax risk of the estimation problem introduced in this section satisfies 
+	\begin{align}
+		R^*(\Theta, \Phi \circ \rho) \geq \Phi(\delta) \lp 1- \frac{\epsilon^2 + \log N_{KL}(\Theta, \epsilon^2) + \log 2}{\log M_{\rho}(\Theta, 2\delta)} \rp. 
+	\end{align}
+	When working with $n$ \iid observations drawn $(X_1, \ldots, X_n)$, the minimax risk satisfies 
+	\begin{align}
+		R^*_n(\Theta, \Phi \circ \rho) \geq \Phi(\delta) \lp 1- \frac{n \epsilon^2 + \log N_{KL}(\Theta, \epsilon^2) + \log 2}{\log M_{\rho}(\Theta, 2\delta)} \rp. 
+	\end{align}
+\end{theorem}
+\begin{proof}
+The proof essentially follows immediately by plugging in the mutual information upper bound in the usual Fano lower bound. We present all the details below for completeness. 
+
+For a fixed $\delta>0$, let $M \equiv M_{\rho}(\Theta, 2\delta)$ denote the $2\delta$-packing number of $(\Theta, \rho)$, and let $\Theta_M$ denote such a packing set. Let $V$ denote a random variable with uniform distribution on $\Theta_M$. Then, we have the following: 
+\begin{align}
+	R^*(\Theta, \Phi \circ \rho) & = \inf_{\thetahat} \sup_{\theta \in \Theta} R(\thetahat, \theta) = \inf_{\thetahat} \sup_{\theta \in \Theta_M} R(\thetahat, \theta) \geq \inf_{\thetahat} \mathbb{E}_{V}[R(\theta, V)], 
+\end{align}
+where $V \sim \mathrm{Uniform}(\Theta_M)$. The last term above can be further lower bounded by 
+\begin{align}
+\inf_{\thetahat} \mathbb{E}_{V}[R(\theta, V)] \geq \Phi(\delta) \inf_{\Psi:\calX \to \Theta_M} \mathbb{P}\lp \Psi(X) \neq V \rp,  
+\end{align}
+where we used the $2\delta$-packing property of the set $\Theta_M$. Since we have assumed that $V$ is uniformly distributed over the finite set $\Theta_M$, we can use the mutual information version of standard Fano's inequality to get the lower bound: 
+\begin{align}
+	R^*(\Theta, \Phi \circ \rho) \geq \Phi(\delta) \lp 1 - \frac{I(V; X) + \log 2}{\log M} \rp. 
+\end{align}
+The final step is to use~Lemma~\ref{lemma:covering-upper-bound} to upper bound $I(V; X)$ with $\epsilon^2 + \log N_{KL}(\Theta, \epsilon^2)$ to conclude the proof. 
+\end{proof}
+To summarize,~Theorem~\ref{theorem:global-fano} suggests the following general recipe for deriving minimax lower bounds~\cite[Section~12.2.22]{DuchiLectureNotes}~(assuming $n$ \iid observations):
+\begin{itemize}
+	\item Obtain an upper bound for $N_{KL}(\Theta, \epsilon^2)$ and a lower bound for $M_{\rho}(\Theta, 2\delta)$. 
+	\item Choose a value  of $\epsilon_n$ such that $n \epsilon_n^2 \asymp \log N_{KL}(\Theta, \epsilon_n^2)$ 
+	\item Choose a value of $\delta_n$ for which $\log M_\rho(\Theta, 2\delta) \geq 2\lp \log 2 + 4 n \epsilon_n^2\rp$
+	\item With these choices, we get the following lower bound on the minimax risk: $R_n^*(\Theta, \Phi \circ \rho) \geq \Phi(\delta_n)/2$.  
+\end{itemize}
+The main benefit of this approach is that in many settings, there exist well-known tight approximations of the packing and covering numbers of parameter spaces which can be used directly to derive lower bounds. In particular, in many examples, we have $\dkl(P_\theta \parallel P_{\theta'}) \leq \kappa \rho(\theta, \theta)^2$, and we can directly employ the covering and packing number bounds for $(\Theta, \rho)$, as we illustrate in the examples next. 
+
+\section{Examples}
+In this section, we look at some examples in which the method described in the previous section is applicable. 
+
+\subsection{Gaussian Location Model}
+\label{subsec:GLM-estimation}
+
+Suppose we have $n$ \iid observations $X_1, \ldots, X_n$ drawn from $N(\theta, \sigma^2 I_d)$, with the parameter set $\Theta = B_2(R) \coloneqq \{\theta \in \mathbb{R}^d: \|\theta\|_2 \leq R\}$,  $\rho(\theta, \theta') = \|\theta - \theta'\|_2$ and $\Phi(t) = t^2$. Then, observe the following: 
+\begin{itemize}
+	\item With $P_\theta = N(\theta, \sigma^2 I_d)$, we have $\dkl(P_{\theta} \parallel P_{\theta'}) = \frac{\|\theta-\theta'\|^2}{2\sigma^2} = \frac{\Phi \circ \rho(\theta, \theta')}{2 \sigma^2}$. This implies the following: 
+	\begin{align}
+		N_{KL}(\Theta, \epsilon^2) = N_\rho(\Theta, \sqrt{2}\sigma \epsilon) \leq C_d \lp \frac{R }{\sqrt{2}\sigma \epsilon} \rp^d
+	\end{align}
+	\item Similarly, with standard volume arguments, we have the following 
+	\begin{align}
+		M_\rho(\Theta, 2\delta) \geq c_d \lp \frac{R}{2\delta} \rp^d
+	\end{align}
+	\item The next step is to choose an $\epsilon_n$ such that 
+	\begin{align}
+		n \epsilon_n^2 \geq \log N_{KL}(\Theta, \epsilon_n^2). 
+	\end{align}
+	Ignoring the constants, a sufficient condition for this is to ensure $n \epsilon_n^2 \geq d \log \lp \frac{R}{ \sigma \epsilon_n} \rp$. By selecting $\epsilon_n \asymp \sqrt{d/n}$, we get that $\log N_{KL}(\Theta, \epsilon_n^2) + n \epsilon_n^2 \lesssim d\log(R \sqrt{n}/\sigma \sqrt{d})$. Thus, with this choice we have 
+	\begin{align}
+		I(V; X^n) + \log 2 \lesssim d\log(R\sqrt{n}/ \sigma \sqrt{d}). 
+	\end{align}
+	\item Next, we choose $\delta_n \asymp \sigma \sqrt{d/n}$, and use the lower bound on $M_\rho(\Theta, \delta_n)$ to ensure that $M_\rho(\Theta, 2\delta_n) \geq 2(\log 2 + I(V;X^n))$. With this choice we get the minimax lower bound of the order 
+	\begin{align}
+		R_n^*(\Theta, \Phi \circ \rho) \gtrsim \Phi\lp \sigma \sqrt{\frac{d}{n}} \rp \asymp \frac{\sigma^2 d}{n}. 
+	\end{align}
+\end{itemize}
+
+\subsection{Nonparametric Regression}
+\label{subsec:nonparametric-regression}
+
+Consider a problem of nonparametric regression with random design~(we can also consider the fixed design case, but random design simplifies matters). In this case, our observation $\X = \{ (U_i,Y_i):  1 \leq i \leq n\}$, with 
+\begin{align}
+	Y_i = \theta(U_i) + \sigma \varepsilon_i. 
+\end{align}
+As before, we assume that $\Theta$ consists of $(C, \gamma)$ H\"older continuous functions, and each $\varepsilon_i \sim N(0, 1)$. 
+So each distribution $P_{\theta}$ in our case is a product $\otimes_{i=1}^n (\mathrm{Uniform}([0,1]^d) \times N(\theta(U_i), \sigma^2))$, and we observe that 
+\begin{align}
+	\dkl(P_\theta \parallel P_\theta') = \frac{n}{2\sigma^2}  \|\theta - \theta'\|_{L^2}^2, \label{eq:nonparametric-regression-1}
+\end{align} 
+where $L^2 \equiv L^2(P_U)$ denotes the $L^2$ norm w.r.t. the uniform distribution on $[0,1]^d$. Suppose our goal is to estimate the regression function $\theta$ in terms of squared $L^2$ norm~(i.e., $\rho(\theta, \theta') = \|\theta-\theta'\|_{L^2}$ and $\Phi(t) = t^2$). Then, we have the following:
+
+\begin{itemize}
+	\item The covering number $N_{KL}(\Theta, \epsilon^2)$ for any $\epsilon>0$ is of the order $N_\rho(\Theta, \sigma \epsilon/\sqrt{n})$. This is known to satisfy 
+	\begin{align}
+		\log N_{KL}(\Theta, \epsilon^2) \asymp \log N_\rho(\Theta, \sigma \epsilon) \asymp \lp \frac{C \sqrt{n}}{\sigma \epsilon_n} \rp^{d/\gamma}. 
+	\end{align}
+	\item The $2\delta$ packing number is of a similar order 
+	\begin{align}
+		\log M_\rho(\Theta, 2\delta) \asymp \lp \frac{C}{\delta} \rp^{d/\gamma}
+	\end{align}
+	\item We need to select $\epsilon_n$ to balance the two terms in the upper bound on $I(V; \X)$; that is, 
+	\begin{align}
+		\epsilon_n: \quad \epsilon_n^2 \asymp \lp \frac{C \sqrt{n}}{\sigma \epsilon_n} \rp^{d/\gamma} \quad \implies \epsilon_n \asymp \lp \frac{\sigma}{\sqrt{n}} \rp^{-1/(1 + 2\gamma/d)}. 
+	\end{align}
+	This leads to a bound on $I(V; \X) \asymp (\sqrt{n}/\sigma)^{2d/(d + 2\gamma)}$. 
+	\item Hence, an appropriate choice of $\delta_n$ to make $(I(V;\X) + \log 2)/\log(M_\rho(\Theta, 2\delta_n))$ is 
+	\begin{align}
+		\delta_n: \quad \lp \frac{C}{\delta_n} \rp^{d/\gamma} \asymp \lp \frac{\sqrt{n}}{\sigma}\rp^{2d/(d+2\gamma)}, \quad \implies \delta_n \asymp \sigma^{\frac{2\gamma}{d+2\gamma}} n^{-{\frac{\gamma}{d+2\gamma}}}. 
+	\end{align}
+	\item With this choice, we know that the minimax risk is of the order $\asymp \Phi(\delta_n) \asymp \delta_n^2$: 
+	\begin{align}
+		R_n^*\lp \Theta, \Phi \circ \rho \rp \gtrsim \lp \frac{\sigma^2}{n} \rp^{\frac{2\gamma}{d + 2\gamma}}. 
+	\end{align} 
+\end{itemize}
+This example illustrates how the global Fano method simplifies the task of deriving minimax lower bounds  in many instances. Unlike the (local Fano) method of the previous lecture, we do not have to manually construct a class of ``hard problems'' in an ad-hoc manner. However, this simplification sometimes comes at the cost of a loss in tightness; for example, the global Fano method fails to capture the poly-log factor in the case of regression in $\sup$ norm~(\blue{Exercise:} try it.), but local Fano does. 
+
+\begin{remark}
+	\label{remark:}
+	When working with fixed design, the key difference will be in the relative entropy expression~\eqref{eq:nonparametric-regression-1}, where the $L^2$-norm will be replaced by an empirical $L^2$-norm. In that case, we can use the H\"older continuity of $\theta$ to get an extra approximation term between the empirical and population $L^2$ norms. 
+\end{remark}
+% \newpage
+\bibliographystyle{abbrvnat}           % if you need a bibliography
+\bibliography{../ref}                % assuming yours is named ref.bib
+
+
+\end{document}
