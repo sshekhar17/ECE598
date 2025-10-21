@@ -1,0 +1,151 @@
+\documentclass[12pt]{article}
+\usepackage[english]{babel}
+\usepackage[utf8x]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{../scribe}
+\usepackage{listings}
+
+\usepackage{hyperref}
+% \usepackage{cleveref}
+\usepackage{xcolor}
+\usepackage{natbib}
+\usepackage{tikz}
+\renewcommand{\arraystretch}{1.5}
+\usepackage{nicefrac}
+% \newcommand{\thetahat}{\widehat{\theta}}
+% \Scribe{Shubhanshu Shekhar}
+\Lecturer{Shubhanshu Shekhar}
+\LectureNumber{14}
+\LectureDate{16th October, 2025}
+\LectureTitle{Universal Portfolios}
+
+\lstset{style=mystyle}
+% \usepackage{tikz}
+\usepackage{comment}
+% \usepackage{pgfplots}
+% \usepackage{enumitem}
+\input{../preamble}
+\input{../newMacros}
+
+
+\begin{document}
+	\MakeScribeTop
+
+In this lecture, we explore an information-theoretic approach to analyzing the problem of sequential investment in stock markets, which is a generalization of the problem of gambling in horse races that we saw in the last lecture. Like universal compression, this problem also admits both stochastic and individual sequence formulations. We will focus on the individual sequence framework, and first introduce the minimax optimal policy. As with universal compression, this minimax optimal policy is computationally infeasible, and is also horizon-dependent. These drawbacks are addressed by a (slightly) suboptimal, but anytime valid, mixture method, called Cover's universal portfolio algorithm. 
+% We end the lecture with a simple instantiation of the portfolio optimization task, that we refer to as ``(continuous) coin betting''.
+In the next few lectures, we will employ these ideas to design powerful sequential inference procedures. 
+
+\section{Sequential Portfolio Optimization}
+
+Consider a portfolio consisting of $m$ stocks. Let $M_t \in [0, \infty)^m$, denote the price of these stocks at time $t$, and let $\x_t \in [0, \infty)^m$ denote the ``price-relative'' vector at time $t$; that is, 
+\begin{align}
+    \x_t = \frac{M_t}{M_{t-1}}, \text{ for all } t \geq 1. 
+\end{align}
+We take the perspective of an investor, who begins with $W_0 = 1\$$, and wishes to sequentially update his portfolio in order to perform as well as the best constantly rebalanced portfolio from a family $\{\bb: \bb \in \Delta_m\}$. That is, in the beginning of each round $t$, the investor rebalances his portfolio according to $Q_t \equiv Q_t(\cdot \mid \x^{t-1}) \in \Delta_m$, leading to the update rule 
+\begin{align}
+    W_t \equiv W_t(Q_t, \x^t) = W_{t-1} \times \sum_{j=1}^m Q_t(j\mid \x^{t-1}) \x_t[j] = W_{t-1} \times \langle Q_t, \x_t \rangle. 
+\end{align}
+For any reference $n$-round investment strategy $\bb$~(which is  a distribution over $[m]$), we denote the final wealth on the sequence $\x^n$ with $W_n(\bb, \x^n) = \prod_{i=1}^n \langle \bb, \x_t \rangle$. Then, our goal is to identify a $n$-round minimax optimal investment strategy 
+\begin{align}
+    Q_n^* \in \argmin_{Q_1^n} \sup_{\bb \in \Delta_m} \sup_{\x^n \in [0,\infty)^{m \times n}}    \frac{W_n(\bb, \x^n)}{W_n(Q_1^n, \x^n)}, \quad V^*_n =\min_{Q_1^n} \sup_{\bb \in \Delta_m} \sup_{\x^n \in [0,\infty)^{m \times n}}    \frac{W_n(\bb, \x^n)}{W_n(Q_1^n \x^n)} 
+\end{align}
+
+\paragraph{Connections to Horse Racing.} It is easy to verify that gambling on horse racing is a special case of the sequential portfolio optimization problem. In particular, consider a sequence of $n$ horse races with winner-odds pairs $(J_1, o_1), \ldots, (J_n, o_n)$, where each $J_i \in [m]$  indicates the index of the winning horse, and $o_i \in [0, \infty)^m$ denotes the odds ratio.  This is a special case of a stock market with price relatives $e_{J_1} \circ o_1, e_{J_2} \circ o_2, \ldots, e_{J_n} \circ o_n$, where $\circ$ represents the coordinate-wise multiplication operation, and $e_{j}$ is the $j^{th}$ standard normal basis vector in $\mathbb{R}^m$. 
+
+\subsection{Minimax Optimal Scheme}
+As in the case of universal compression, we begin by analyzing the minimax value of the portfolio optimization game. Interestingly, it turns out that the minimax value even in the case of portfolio optimization is characterized by the Shtarkov complexity. 
+
+\begin{theorem}
+    \label{theorem:seq-portfolio-minimax} Introduce the following terms: 
+    \begin{align}
+        V_n^* &\coloneqq \inf_{Q_1^n} \sup_{\x^n \in [0,\infty)^{m \times n}}\sup_{\bb \in \Delta_m}  \frac{W_n(\bb, \x^n)}{W_n(Q_1^n, \x^n)},  \\
+        \mathrm{Comp}_n &\coloneqq \log\lp  \sum_{n_1, \ldots, n_m} {n \choose n_1, n_2, \ldots, n_m} 2^{-n H\lp \frac{n_1}{n}, \ldots, \frac {n_m}{n} \rp} \rp. 
+    \end{align}
+    Then, we have $\log V_n^* = \mathrm{Comp}_n$. 
+\end{theorem}
+
+We will follow the simplified proof presented by~\citet[Chapter 17]{cover2006elements}, which proceeds in the following steps: 
+\begin{itemize}
+    \item The first observation is that, since horse races are a subset of  stock markets, the following is always true: $V_n^* \geq \mathrm{Comp}_n$. So the key step is to show the inequality in the other direction. 
+
+    \item The first step towards establishing $V_n^* \leq \mathrm{Comp}_n$ is to observe that portfolio optimization with $m$ stocks over $n$ rounds can be equivalently interpreted as investing in $m^n$ stocks over one round. We state that result in~Lemma~\ref{lemma:minimax-portfolio-1}. 
+
+    \item The next step relies on a simple algebraic inequality that allows us to get the final upper bound. This establishes the fact that horse races are in some sense the \emph{hardest} stock markets. 
+\end{itemize}
+
+\begin{lemma}
+    \label{lemma:minimax-portfolio-1} Let $\bb_1^n = (\bb_1,\ldots, \bb_n)$ denote a predictable~(or causal) portfolio optimization strategy, and let $W_n(\bb_1^n, \x^n)$  be the wealth after $n$ rounds starting with $W_0=1$. Then, we have 
+    \begin{align}
+        &W_n(\bb_1^n, \x^n) = \langle \w, Y \rangle, \qtext{where}\w \in \calP([m]^n), \qtext{and} Y: [m]^n \to [0, \infty), \\
+        \text{with} \quad & 
+        \w[\jj^n] = \prod_{t=1}^n \bb_t[j_t], \qtext{and} Y[\jj^n] = \prod_{t=1}^n \x[j_t], \qtext{for} \jj^n = (j_1, \ldots, j_n) \in [m]^n.  
+    \end{align}
+\end{lemma}
+\begin{proof}
+    Observe that the wealth associated with the sequence $\x^n$ is equal to 
+    \begin{align}
+        W_n(\bb_1^n, \x^n) &= \prod_{t=1}^n \langle \bb_t, \x_t \rangle = \prod_{t=1}^n \lp \sum_{j=1}^m \bb_t[j] \x_t[j] \rp, 
+    \end{align}
+    which is in a ``product-of-sums'' form. We can expand it to get a ``sum-of-products'' form, as follows: 
+    \begin{align}
+        W_n(\bb_1^n, \x^n) & = \sum_{\jj^n \in [m]^n} \prod_{t=1}^n \bb_t[j_t] \x_t[j_t]  = \sum_{\jj^n \in [m]^n} \lp \prod_{t=1}^n \bb_t[j_t] \rp \lp \prod_{t=1}^n \x_t[j_t]\rp, 
+    \end{align} 
+where $\jj^n = (j_1, \ldots, j_t) \in [m]^n$. The summation is over all such choices of $\jj^n \in [m]^n$, and each $\jj^n$ reflects the sequence of choices: Select the $j_t^{th}$ term in the summation $\sum_{j=1}^m \bb_t[j] \x_t[j] = \langle \bb_t, \x_t \rangle$, for $t \in [n]$. Let us introduce the terms: 
+\begin{align}
+    \w[\jj^n] \coloneqq \prod_{t=1}^n \bb_t[j_t], \qtext{and} Y[\jj^n] \coloneqq \prod_{t=1}^n \x_t[j_t]. 
+\end{align}
+We can verify that $\w \in \calP([m]^n)$ and $Y:[m]^n \to [0, \infty)$. In other words, $W_n(\bb_1^n, \x^n)$ is equal to the wealth after one-round of investment using allocation $\w$ in a stock-market with $m^n$ stocks with price relatives $Y$. 
+\end{proof}
+
+\begin{example}
+    While the notation used in~Lemma~\ref{lemma:minimax-portfolio-1} seems complicated, the argument is rather simple. Indeed, consider an example with $m=2$ stocks, and $n=2$ rounds. Then, we can expand $W_2 \equiv W_2(\bb_1^2, \x^2)$ as follows (using $\bb_{tj}$ and $\x_{tj}$ for $\bb_t[j]$ and $\x_t[j]$): 
+    \begin{align}
+        W_2 &= \prod_{t=1}^2 \langle \bb_t, \x_t \rangle =  \lp \bb_{11} \x_{11} + \bb_{12} \x_{12} \rp \lp \bb_{21} \x_{21} + \bb_{22} \x_{22} \rp \\
+        & = \bb_{11} \x_{11} \bb_{21} \x_{21} + \bb_{11} \x_{11} \bb_{22} \x_{22} + \bb_{12} \x_{12} \bb_{21} \x_{21} + \bb_{12} \x_{12} \bb_{22} \x_{22}  \\
+        & = (\bb_{11} \bb_{21})(\x_{11} \x_{21}) + (\bb_{11} \bb_{22})(\x_{11} \x_{22}) + (\bb_{12} \bb_{21})(\x_{12} \x_{21}) + (\bb_{12} \bb_{22})(\x_{12} \x_{22})  \\
+        & = \w[11] Y[11] + \w[12]Y[12] + \w[21]Y[21] + \w[22] Y[22] \\
+        & = \sum_{\jj^2 \in \{1, 2\}^2 } \w[\jj^2] Y[\jj^2] = \langle \w, Y \rangle. 
+    \end{align}
+\end{example}
+
+Next, we recall a simple inequality from~\citet[Lemma 16.7.1]{cover2006elements}: for nonnegative real numbers $u_1, \ldots, u_N$ and $v_1, \ldots, v_N$, we have 
+\begin{align}
+    \frac{\sum_{i=1}^N u_i}{\sum_{i=1}^N v_i} \geq \min_{i} \frac{u_i}{v_i}.    \label{eq:cover-thomas-inequality} 
+\end{align}
+Applying this inequality with $N=m^n$, $u_{\jj^n} = \w[\jj^n] Y[\jj^n]$ and $v_{\jj^n} = \lp \prod_{t=1}^n \bb[j_t] \rp Y[\jj^n]$, we get the following for any $\bb\in \Delta_m$: 
+\begin{align}
+    \frac{W_n(\bb_1^n, \x^n)}{W_n(\bb, \x^n)} \geq \min_{\jj^n} \frac{\w[\jj^n] Y[\jj^n]}{\lp \prod_{t=1}^n \bb[j_t] \rp Y[\jj^n]} =  \min_{\jj^n} \frac{\w[\jj^n] }{\lp \prod_{t=1}^n \bb[j_t] \rp }. 
+\end{align}
+Hence, we have the following upper bound 
+\begin{align}
+    \log V_n^* = \inf_{\bb_1^n} \sup_{\bb \in \Delta_m} \sup_{\x^n} \log \lp \frac{W_n(\bb, \x^n)}{W_n(\bb_1^n, \x^n)} \rp \leq \inf_{\w \in \calP([m]^n)}\sup_{\bb \in \Delta_m} \max_{\jj^n} \log\lp  \frac {\lp \prod_{t=1}^n \bb[j_t] \rp }{\w[\jj^n] } \rp. 
+\end{align}
+The term on the right side is the individual sequence universal compression complexity as introduced in the statement of the theorem. This completes the proof. \hfill \qedsymbol
+
+\begin{remark}
+    \label{remark:minimax-portfolio-value} For the special case of $m=2$, we can check that the value $V^*_n$ lies in $[\sqrt{n+1}, 2 \sqrt{n+1}]$. In other words, the minimax optimal causal portfolio performs as well as the best constantly rebalanced portfolio in hindsight, up to a polynomial factor in the horizon $n$. In many cases, the best constant portfolio leads to an exponential growth of the wealth of the investor, and hence the minimax optimal portfolio matches that up to the first order term in the exponent. 
+\end{remark}
+\subsection{Mixture Method: Cover's Universal Portfolio}
+As in the case of universal compression, the minimax optimal portfolio of the previous section is not horizon independent~(that is, it changes with every $n$), and thus is not suitable for online application. To address this, we again introduce an analog of the ``mixture method'' that consists of using a mixing distribution $\pi\in \calP(\Delta_m)$, selecting a causal portfolio allocation sequence $(\bb_1, \ldots, \bb_n)$, where 
+\begin{align}
+    \bb_{t+1} = \frac{\int_{\Delta_m} \bb W_t(\bb, \x^t) \pi(\bb) d\bb}{\int_{\Delta_m} W_t(\bb, x^t) \pi(\bb) d\bb}, \quad \implies \quad \langle \bb_{t+1}, \x_{t+1} \rangle = \frac{\int_{\Delta_m} W_{t+1}(\bb, \x^{t+1}) \pi(\bb) d\bb }{\int_{\Delta_{m}} W_t(\bb, \x^t) \pi(\bb) d\bb}
+\end{align}
+On taking the product over $t=0, \ldots, n-1$, we get the wealth of the mixture investment strategy after $n$ rounds is 
+\begin{align}
+    W_n(\pi, \x^n) = \frac{ \int_{\Delta_m} W_n(\bb, \x^n) \pi(\bb) d\bb}{\int_{\Delta_m} \pi(\bb) d\bb } = { \int_{\Delta_m} W_n(\bb, \x^n) \pi(\bb) d\bb}. 
+\end{align}
+By following a similar reduction as in the previous case, we can relate the worst case performance of the mixture portfolio strategy to the minimax regret of a universal compression strategy over the alphabet $[m]^n$. Since it is known that the regret of the mixture strategy with Jeffreys prior~(which in this case is the Dirichlet prior with parameter $1/2$)  is within a constant of that of the minimax optimal strategy, we can conclude that 
+\begin{align}
+    \sup_{\bb \in \Delta_m} \sup_{\x^n \in [0,\infty)^{m \times n}} \log\lp \frac{W_n(\bb, \x^n)}{W_n(\pi_J, \x^n)} \rp \leq \frac{1}{2}\log \lp \frac{n}{2\pi} \rp + \calO(1). 
+\end{align}
+See~\citet[Section~16.7.2]{cover2006elements} or~\citet{cover1996universal} for a proof of this statement. 
+
+\section{Application to Sequential Inference}
+In the next few lectures, we will use the two-stock portfolio as a subroutine to design powerful sequential nonparametric inference methods. The key connection between these two seemingly unrelated topics is via a philosophical principle of \emph{testing by betting}, recently elucidated by~\citet{shafer2021testing}. This principle allows us to leverage the large body of work in universal information theory and online learning to construct sequential inference procedure in novel and practically useful ways. 
+
+% \newpage
+\bibliographystyle{abbrvnat}           % if you need a bibliography
+\bibliography{ref}                % assuming yours is named ref.bib
+
+
+\end{document}
