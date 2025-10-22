@@ -12,8 +12,6 @@
 \usepackage{tikz}
 \renewcommand{\arraystretch}{1.5}
 \usepackage{nicefrac}
-% \newcommand{\thetahat}{\widehat{\theta}}
-% \Scribe{Shubhanshu Shekhar}
 \Lecturer{Shubhanshu Shekhar}
 \LectureNumber{15}
 \LectureDate{21st October, 2025}
@@ -52,14 +50,14 @@ In the FSS setting, we have $X^n \simiid P_\theta$, and we wish to design a dete
 \end{align}
 where  $t_\alpha = \min \{m \in \{0, \ldots, n\}: \mathbb{P}_{\theta_0}(S_n \geq m) \leq \alpha\}$. Now, suppose that instead of working with the entire dataset $X^n$ at once, we observed the samples one at a time, and we define a stopping time $\tau$ and a hypothesis test $\Psi_\tau$ as  
 \begin{align}
-    \tau = \min \{i \leq n: S_i \geq t_\alpha\}, \quad \Psi_\tau = \begin{cases}
+    \tau = \inf \{i \geq 1: S_i \geq t_\alpha\}, \quad \Psi_\tau = \begin{cases}
         1,& \text{ if } \tau \leq n, \\
         0, & \text{ otherwise}.  
     \end{cases}
 \end{align}
 It is easy to observe that 
 \begin{align}
-    \mathbb{P}_{H_0}(\Psi_\tau = 1) = \mathbb{P}_{H_0}(\Psi(X^n)=1), \qtext{and}  \tau \stackrel{a.s.}{\leq} n, 
+    \mathbb{P}_{H_0}(\Psi_\tau = 1) = \mathbb{P}_{H_0}(\Psi(X^n)=1), \qtext{and}  \min \{\tau, n\} \stackrel{a.s.}{\leq} n, 
 \end{align}
 by construction. Hence, $\Psi_\tau$ has the same significance level as the FSS test $\Psi$, but it requires a random number $\tau \leq n$ of observations; that is, it allows  ``early stopping''.  Thus, the sequential procedure $\Psi_\tau$ is a strict improvement over its FSS analog $\Psi$. In general, sequential methods do not result in such ``pathwise'' improvement; this is a special case due to the monotonicity of $S_n$ and the one-sided nature of the testing problem. 
 
@@ -224,7 +222,7 @@ Our discussion reveals that, \emph{in principle}, the problems of sequential est
 
 % \newpage
 \bibliographystyle{abbrvnat}           % if you need a bibliography
-\bibliography{ref}                % assuming yours is named ref.bib
+\bibliography{../ref}                % assuming yours is named ref.bib
 
 
 \end{document}
