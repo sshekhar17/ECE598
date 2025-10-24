@@ -1,0 +1,218 @@
+\documentclass[12pt]{article}
+\usepackage[english]{babel}
+\usepackage[utf8x]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{../scribe}
+\usepackage{listings}
+
+\usepackage{hyperref}
+% \usepackage{cleveref}
+\usepackage{xcolor}
+\usepackage{natbib}
+\usepackage{tikz}
+\renewcommand{\arraystretch}{1.5}
+\usepackage{nicefrac}
+% \newcommand{\thetahat}{\widehat{\theta}}
+% \Scribe{Shubhanshu Shekhar}
+\Lecturer{Shubhanshu Shekhar}
+\LectureNumber{16}
+\LectureDate{23rd October, 2025}
+\LectureTitle{Designing Sequential Tests: Part I}
+
+\lstset{style=mystyle}
+% \usepackage{tikz}
+\usepackage{comment}
+% \usepackage{pgfplots}
+% \usepackage{enumitem}
+\input{../preamble}
+\input{../newMacros}
+
+
+\begin{document}
+	\MakeScribeTop
+\red{TODO: fix the notation.} \\
+In our previous lecture, we introduce the three main problems of sequential anytime valid inference, and observed that all of them can  be reduced to designing sequential power-one tests. In this lecture, we begin our discussion of some general design principles and technical results that will be used throughout in our discussion of power-one tests. To present our ideas in the most transparent way, in this lecture we focus on the technically simple case of \iid observations on finite alphabets. Subsequent lectures will discuss how similar results can be derived in more general settings. 
+
+
+\section{Simple Null and Alternative}
+Throughout this lecture, we assume that $\calX = \{x_1, \ldots, x_m\}$ is a finite alphabet, and $\{\mathbb{P}_\theta = P_\theta^{\infty}:\theta \in \Delta_m\}$ denotes the set of all \iid distributions on $\calX^\infty$. In our notation, $P_\theta$ denotes a probability distribution on $\calX$ with probability mass function~(pmf) $\theta \in \Delta_m$. With this notation, consider the following problem: Given $\{X_n: n\geq 1\} \sim \mathbb{P}_\theta$ and a confidence parameter $\alpha \in (0, 1]$, construct a level-$\alpha$ power-one test to decide between 
+\begin{align}
+    H_0: \theta = \theta_0, \qtext{versus} H_1: \theta = \theta_1. 
+\end{align}
+Here, $\theta_0, \theta_1$ are two pmfs such that $\dkl(P_{\theta_1} \parallel P_{\theta_0}) > 0$.  As we discussed in Example~1 of Lecture 15, a natural approach for designing a level-$\alpha$ test in this case is 
+\begin{align}
+    \tau = \inf \{n \geq 1: L_n \geq 1/\alpha\}, \qtext{where} L_0=1, \; L_n = L_{n-1} \times \frac{\theta_1[X_n]}{\theta_0[X_n]}, \; \forall n\geq 1. 
+\end{align}
+The stochastic process $\{L_n: n \geq 0\}$ adapted to the natural filtration $\{\calF_n: n \geq 0\}$ with $\calF_0 = \{\emptyset, \calX^\infty\}$ and $\calF_n = \sigma(X_1, \ldots, X_n)$ is called the \emph{likelihood ratio} process. It is easy to verify that the likelihood ratio process is a \emph{test martingale}; that is, a non-negative supermartingale with an initial value $1$ under the null. That is, each $L_n$ is integrable and for all $n \geq 1$, we have with $Y_n \coloneqq \theta_1[X_n]/\theta_0[X_n]$: 
+\begin{align}
+    \mathbb{E}_{\theta_0}\lb L_n \mid \calF_{n-1} \rb = \mathbb{E}_{\theta_0}\lb L_{n-1} \times  Y_n \mid \calF_{n-1} \rb = L_{n-1} \mathbb{E}_{\theta_0}\lb Y_n \mid \calF_{n-1} \rb = L_{n-1}, 
+\end{align}
+where the second equality uses the fact that $L_{n-1}$ is $\calF_{n-1}$-measurable, and the last inequality uses the assumption that $X_n \perp \calF_{n-1}$, and that $\mathbb{E}_{\theta_0}[Y_n] = 1$.
+This establishes that $\{L_n: n \geq 1\}$ is  a test-martingale under the null. Next, we state a time-uniform generalization of Markov's inequality, referred to as Ville's inequality, that will allow us to establish the level-$\alpha$ property of our tests. 
+\begin{fact}[\cite{ville1939etude}]
+    \label{fact:Villes-Inequality} Let $\{S_n: n \geq 0\}$ denote a nonnegative supermartingale in a filtered probability space $(\Omega, \calF, (\calF_n)_{n \geq 0}, \mathbb{P})$; that is each $S_n \geq 0$ a.s., integrable, and satisfies $\mathbb{E}[S_n \mid \calF_{n-}] \leq S_{n-1}$ a.s. Then, for any $\lambda > 0$, we have 
+    \begin{align}
+        \mathbb{P}\lp \sup_{n \geq 0} S_n \geq \lambda \rp \leq \frac{\mathbb{E}[S_0]}{\lambda}. 
+    \end{align}
+    In particular, if $S_0=1$ a.s., and $\lambda = 1/\alpha$, we get that $\mathbb{P}(\sup_{ \n \geq 0} S_n \geq 1/\alpha) \leq \alpha$. 
+\end{fact}
+Thus, a direct application of Ville's inequality implies the level-$\alpha$ property of our test $\tau$. We now proceed to the analysis of the performance of this test under the alternative. 
+
+\begin{proposition}
+    \label{prop:simple-hypothesis-upper-bound} Suppose the pmfs $\theta_0, \theta_1$ are such that there exist constants $-\infty < c_- <  c_+ < \infty$ such that $\log(\theta_1[X]/\theta_0[X]) \in [c_-, c_+]$.  Then, under the alternative, we have 
+    \begin{align}
+        \mathbb{E}_{\theta_1}[\tau] \leq \frac{\log(1/\alpha) + c_+}{\dkl(P_{\theta_1} \parallel P_{\theta_0})}. 
+    \end{align}
+    As a consequence, we also have the power-one property, $\mathbb{P}_{\theta_1}(\tau < \infty) = 1$. 
+\end{proposition}
+\begin{proof}
+    Let us use the notation $S_n = \log L_n = \sum_{i=1}^n \log Y_i$, and observe that $\{\tau < n\} = \{S_n/n < \log(1/\alpha/n\}$. Now, by the strong law of large numbers, we know that $S_n/ n \stackrel{a.s.}{\to} \gamma \coloneqq \dkl(P_{\theta_1} \parallel P_{\theta_0})$, which implies that $\tau < \infty$ almost surely. 
+
+    Since $\tau< \infty$ almost surely, and the increments of the process $\{S_n: n \geq 1\}$ are bounded, we can apply Wald's identity to observe 
+    \begin{align}
+        \mathbb{E}_{\theta_1}[S_\tau - \tau \gamma] = 0, \qtext{or} 
+        \mathbb{E}_{\theta_1}[S_\tau] = \gamma \mathbb{E}_{\theta_1}[\tau]. 
+    \end{align}
+    Finally, by the definition of $\tau$, we know that $S_{\tau} \leq \log(1/\alpha) + c_+$. Using this in the above equality, we get the required 
+    \begin{align}
+        \mathbb{E}_{\theta_1}[\tau] \leq \frac{\log(1/\alpha) + c_+}{\gamma}. 
+    \end{align}
+    This completes the proof. 
+\end{proof}
+\begin{remark}
+    We have presented the above statement under bounded log-likelihood ratio assumptions for simplicity. The boundedness assumption on the log-likelihood ratio is rather strong, but it can be relaxed by using more careful arguments to analyze the ``overshoot'' at the last step; that is, $S_{\tau} - \log(1/\alpha)$ in the proof of~Proposition~\ref{prop:simple-hypothesis-upper-bound}.  
+\end{remark}
+
+\section{Point Null versus Composite Alternative}
+\label{sec:point-null-comp-alt}
+We now consider the case of the composite alternative. 
+\begin{align}
+    H_0: \theta = \theta_0, \qtext{versus} H_1: \theta \neq \theta_0. 
+\end{align}
+In this case, we cannot use a single likelihood ratio. Instead, we use ideas from universal compression, to construct a mixture distribution using Jeffreys prior for the numerator. More specifically, define 
+\begin{align}
+    L_0 = 1, \quad L_n = L_{n-1} \times \frac{\hat{\theta}_n[X_n]}{\theta_0[X_n]}, 
+\end{align}
+where $\thetahat_n$ is any $\calF_{n-1}$-measurable prediction of the unknown pmf. Note that as long as each predictable $\thetahat_n$ is a pmf, the process $\{L_n: n \geq 0\}$ remains a nonnegative martingale, and hence the level-$\alpha$ property still holds. 
+
+Under the alternative however, the performance of the test depends on the quality of the predictions. At this point, we recall a useful fact about the individual sequence regret of the mixture method, or the KT estimator. 
+\begin{fact}
+    \label{fact:universal-compression-regret} 
+    Let $q_J^n$ denote the mixture distribution w.r.t. Jeffreys prior for $\Delta_m$. Then, 
+    there exists a constant $C_m$~(depends only on the support size $m$), such that we have the bound 
+    \begin{align}
+        \sup_{x^n \in \calX^n} \sup_{p \in \Delta_m} \log \lp \frac{\prod_{i=1}^n p(x_i)}{q_J^n(x^n)} \rp \leq \frac{m-1}{2} \log n + C_m. 
+    \end{align}
+    In particular, for any sequence $x^n \in \calX^n$ and any $p \in \Delta_m$, we have 
+    \begin{align}
+        \log\lp \frac 1 {q^n_J(x^n)} \rp \leq \log \lp \frac 1 {\prod_{i=1}^n p(x_i)} \rp + r_n, \qtext{with} r_n \coloneqq \frac{ m-1}{2} \log n + C_m.
+    \end{align}
+\end{fact}
+Now suppose that we select $\thetahat_n$ according to the mixture w.r.t. Jeffreys prior in the construction of the process $\{L_n: n \geq 1\}$, then for any $n \geq 1$. Then, under the alternative with the true parameter $\theta_1$,~Fact~\ref{fact:universal-compression-regret} implies that 
+\begin{align}
+    \log L_n &= \log \lp \frac{q_J^n(X^n)}{\theta_0(X^n)} \rp = \log \lp \frac{\theta_1(X^n)}{\theta_0(X^n)} \rp + \log \lp \frac{q_J^n(X^n)}{\theta_0(X^n)} \rp \\
+    &\stackrel{a.s.}{\geq} \log L^*_n - \sup_{x^n}\log\lp \frac{\theta_0(x^n)}{q_J^n(x^n)} \rp  \stackrel{a.s.}{\geq} \log L^*_n -  r_n. 
+\end{align}
+Hence, the random stopping time $\tau$ can be upper bounded by $T \coloneqq \inf \{n \geq 1: \log L^*_n \geq \log(1/\alpha) + r_n\}$. The key point is that $T_J$ is easier to analyze as it involves the first boundary crossing~($r_n + \log(1/\alpha)$) of a random walk $\log L^*_n = \sum_{i=1}^n \log Y_i$, where $Y_i = \theta_1[X_i]/\theta_0[X_i]$. In particular, observe that 
+\begin{align}
+    \mathbb{E}_{\theta_1}[\log L_n] \geq \mathbb{E}_{\theta_1}[\log L_n^*] - r_n = n \gamma - \frac{m-1}{2}\log n - C_m,\label{eq:redundancy-likelihood-func}
+\end{align}
+where recall that $\gamma = \dkl(P_{\theta_1} \parallel P_{\theta_0})$. Hence, the process $\log L_n$ is expected to grow at a linear rate (with a negligible logarithmic perturbation by the universal compression regret).  This allows us to obtain an upper bound on the expected stopping time as we record in our next result. 
+\begin{proposition}
+    \label{prop:expected-stopping-time-2} 
+    Under the alternative, suppose the true parameter $\theta_1 \neq \theta_0$ is such that there exist constants $-\infty < c_- <  c_+ < \infty$ such that $\log(\theta_1[X]/\theta_0[X]) \in [c_-, c_+]$.  Then, we have the following with $\gamma \coloneqq \dkl(P_{\theta_1} \parallel P_{\theta_0})$: 
+    \begin{align}
+        \mathbb{E}_{\theta_1}[\tau] = \mathcal{O}\lp \frac{\log(1/\alpha)}{\gamma} \rp.     \end{align}
+    As a consequence, we also have the power-one property, $\mathbb{P}_{\theta_1}(\tau < \infty) = 1$. 
+\end{proposition}
+We state the result in the $\mc{O}(\cdot)$  form to simplify the calculations, but the statement can be sharpened by a more careful argument. 
+\begin{proof}
+    Let us use the notation $S_n = \log(L_n)$ and $S^*_n = \log L^*_n$, where $L_n$ is the likelihood function with the mixture distribution in the numerator, and  $L^*_n$ is the true likelihood, and define $T = \inf \{n \geq 1: S_n^* \geq \log(1/\alpha) + r_n\}$. Then, by~\eqref{eq:redundancy-likelihood-func}, we know that $T \leq \tau$ almost surely. Thus, to get an upper bound on $\mathbb{E}_{\theta_1}[\tau]$ it suffices to upper bound the expectation of $T$. 
+
+    Now, observe the following: 
+    \begin{itemize}
+        \item For $\gamma > 0$, the stopping time $T$ is almost surely finite. This is because $S_n^*/n \stackrel{a.s.}{\to} \gamma >0$, while the normalized threshold $(\log(1/\alpha) + r_n)/n \to 0$. Hence, $S_n^*$ crosses the boundary with probability $1$. 
+
+        \item Also, by the assumption of the bounded log-likelihood ratio, the process $S_n^*$ has bounded increments. 
+    \end{itemize}
+    Because of these conditions, we can apply Wald's identity to the martingale $\{S_n^* -n \gamma: n \geq 1\}$ with the stopping time $T$, to get 
+    \begin{align}
+        0 = \mathbb{E}_{\theta_1}[S_0^* - 0] = \mathbb{E}_{\theta_1}[S_T^* - T \gamma] \quad \implies \quad \mathbb{E}_{\theta_1}[S_T^*] = \gamma \mathbb{E}_{\theta_1}[T]. \label{eq:prop2-proof-1}
+    \end{align}
+    Next, by the definition of $T$, and the bounded assumption, we know that $S_T \leq \log(1/\alpha) + r_T + c_+$, which implies that  
+    \begin{align}
+        \mathbb{E}_{\theta_1}[S_T]\leq \log(1/\alpha) + c_+ + \log \mathbb{E}_{\theta_1}[r_T].  \label{eq:prop2-proof-2}
+    \end{align}
+    Recall that $r_T = ((m-1)/2) \log T + C_m$. Combining~\eqref{eq:prop2-proof-1} and~\eqref{eq:prop2-proof-2}, we can conclude that 
+    \begin{align}
+        \mathbb{E}_{\theta_1}[T] = \mathcal{O}\lp \frac{\log(1/\alpha \gamma)}{\gamma} \rp. 
+    \end{align}
+    This completes the proof, as $\mathbb{E}_{\theta_1}[\tau] \leq \mathbb{E}_{\theta_1}[T]$ by construction. 
+    
+\end{proof}
+
+\section{Composite Null versus Composite Alternative}
+\label{sec:comp-null-comp-alt}
+We now consider the most general case of $H_0: \theta \in \Theta_0$ versus $H_1: \theta \in \Theta_1$. In this case, we present a suboptimal and conservative approach to designing sequential tests by using a `worst-case' point null to construct a test-martingale. 
+
+For the given null class, define $\bar{\theta}_0$ as the unnormalized distribution with $\bar{\theta}_0[x] = \sup_{\theta \in \Theta_0} \theta[x]$ for all $x \in \calX$. Then, for any $n \geq 1$, and with $q_J^n$ denoting the mixture distribution~(with Jeffreys prior), we define the process 
+\begin{align}
+    L_n = \frac{q_J^n(X^n)}{\prod_{i=1}^n \bar{\theta}_0[X_i]}, \qtext{where} q_J^n(x^n) = \int_{\Delta_m} \theta[x^n] \pi_J(\theta) d\theta, \; \forall x^n \in \calX^n. 
+\end{align}
+\paragraph{Level-$\mathbf{\alpha}$ property.} Now, under the null if the true parameter is some $\theta_0 \in \Theta_0$, then due to our conservative choice of $\bar{\theta}_0$ that dominates any $\theta_0$ pointwise~(i.e., $\theta_0[x] \leq \bar{\theta}_0[x]$ for all $x$, we have that 
+\begin{align}
+    L_n \leq L'_n = \frac{q_J^n(X^n)}{\theta_0[X^n]}\; \text{for all } n \geq 1. 
+\end{align}
+In other words, $L_n$ is upper-bounded  by $L_n'$ which is exactly the process we constructed in~Section~\ref{sec:point-null-comp-alt}. Since $\{L_n': n \geq 0\}$  is a test-martingale under $\theta=\theta_0$, we can conclude that $\tau = \inf \{n \geq 1: L_n \geq 1/\alpha\}$ satisfies the level-$\alpha$ property. 
+
+
+\paragraph{Expected Stopping Time.} The expected stopping time analysis follows a similar pattern as the previous two cases. In particular, introduce the terms
+\begin{align}
+    \bar{\gamma} = \sum_{x \in \calX} \theta_1[x] \log \lp \frac{\theta_1[x]}{\bar{\theta}_0[x]} \rp, \qtext{and} \bar{S}_n = \log \frac{\prod_{i=1}^n \theta_1[X_i]}{\prod_{i=1}^n \bar{\theta}_0[X_i]}. 
+\end{align}
+Then, by using the universal compression regret, we can show that 
+\begin{align}
+    S_n = \log L_n \geq \bar{S}_n - r_n, \qtext{with} r_n = \frac{m-1}{2} \log n + C_m. 
+\end{align}
+Then, as before, we can upper-bound $\tau$ with the stopping time $T = \inf \{n \geq 1: \bar{S}_n \geq \log(1/\alpha) + r_n\}$, and show that 
+\begin{align}
+    \mathbb{E}_{\theta_1}[\tau] = \mathcal{O} \lp \frac{\log(1/l\alpha \bar{\gamma}}{\bar{\gamma}} \rp. 
+\end{align}
+The key point of difference is that $\bar{\gamma}$ is a more conservative measure of hardness of the problem. A correct complexity measure should be 
+\begin{align}
+    \gamma_{\theta_1} = \inf_{\theta_0 \in \Theta_0} \dkl(P_{\theta_1} \parallel P_{\theta_0}). 
+\end{align}
+By using less conservative process $\{L_n: n \geq 1\}$ and under certain assumptions, we can construct stopping times that depend on $\gamma_{\theta_1}$. 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\begin{appendix}
+    \section{Proof of Fact~\ref{fact:Villes-Inequality}}
+    Introduce the (possibly infinite) stopping time $\tau = \inf \{n \geq 1: S_n \geq \lambda\}$, and defined the ``stopped process'' $\{S^\tau_n: n \geq 1\}$, with $S^{\tau}_n = S_{\tau \wedge n} = S_{\min\{\tau, n\}}$. Then it is a standard fact that \href{https://proofwiki.org/wiki/Stopped_Supermartingale_is_Supermartingale}{stopped supermartingales are also supermartingales}. In particular, this implies that 
+    \begin{align}
+        \mathbb{E}[S^\tau_n] \leq \mathbb{E}[S^{\tau}_0] = \mathbb{E}[S_0]. 
+    \end{align}
+
+    Next, we consider the two events $\{\tau \leq n\}$ and $\{\tau > n\}$. 
+    \begin{itemize}
+        \item Under $\{\tau \leq n\}$, we know that $\min\{\tau, n\} = \tau$, and hence $S^\tau_n = S_\tau \geq \lambda$~(by definition).
+        \item Under $\{\tau > n\}$, we use the trivial bound that $S^\tau_n = S_n \geq 0$ almost surely. 
+    \end{itemize}
+    Together, these two observations can be summarized as 
+    \begin{align}
+        S^{\tau}_n \geq \lambda \boldsymbol{1}_{\tau \leq n} \quad \implies \quad 
+        \mathbb{P}\lp \tau \leq n \rp \leq \frac{1}{\lambda} \mathbb{E}[S^\tau_n ] \leq \frac{1}{\lambda} \mathbb{E}[S_0]
+    \end{align}
+    Since the event $\{\tau \leq n\}$ increases to $\{\tau < \infty\}$ as $n \uparrow \infty$, continuity of probability implies $\mathbb{P}(\tau < \infty) = \lim_{n \to \infty} \mathbb{P}(\tau \leq n)$. Thus, we get the required 
+    \begin{align}
+        \mathbb{P}(\tau < \infty) = \mathbb{P}(\exists n < \infty: S_n \geq \lambda) \leq \frac{\mathbb{E}[S_0]}{\lambda}. 
+    \end{align}
+    This completes the proof. \hfill \qedsymbol
+\end{appendix}
+
+\bibliographystyle{abbrvnat}           % if you need a bibliography
+\bibliography{../ref}                % assuming yours is named ref.bib
+
+
+\end{document}
