@@ -188,7 +188,7 @@ Using the inequality from~\Cref{proof:logarithmic-inequality}, we can conclude t
 \begin{align}
     y_a \leq \frac{b_0+ a}{\gamma_a} + \frac{c}{\gamma_a} \lp \log \lp \frac{b_0 + a}{\gamma_a} \rp  + 1\rp + \frac{c}{\gamma_a} \log^+\lp \frac{c}{\gamma_a} \rp  \asymp \frac{b_0 + a + c \log\lp \frac{b_0 + a}{\gamma_a} \rp}{\gamma_a}. 
 \end{align}
-Now, it remains for us to select an appropriate $a$. To do this, note that $\gamma = \mathbb{E}[Y] = \mathbb{E}[U] + \mathbb{E}[(Y-a)^+] = \gamma_a + \mathbb{E}[(Y-a)^+]$. We know that $(Y-a)^+ \overset{a.s.}{\to} 0$ as $a \uparrow \infty$, and hence by \href{https://en.wikipedia.org/wiki/Monotone_convergence_theorem}{monotone convergence theorem}, we can conclude $\lim_{a \uparrow \infty} \mathbb{E}[(Y-a)^+] = 0$, which implies $\lim_{a \uparrow \infty} \gamma_a = \gamma$.  Hence, we can select a value $a_0$ such that $\gamma_{a_0} \geq \gamma$, and that gives us 
+Now, it remains for us to select an appropriate $a$. To do this, note that $\gamma = \mathbb{E}[Y] = \mathbb{E}[U] + \mathbb{E}[(Y-a)^+] = \gamma_a + \mathbb{E}[(Y-a)^+]$. We know that $(Y-a)^+ \overset{a.s.}{\to} 0$ as $a \uparrow \infty$, and hence by \href{https://en.wikipedia.org/wiki/Monotone_convergence_theorem}{monotone convergence theorem}, we can conclude $\lim_{a \uparrow \infty} \mathbb{E}[(Y-a)^+] = 0$, which implies $\lim_{a \uparrow \infty} \gamma_a = \gamma$.  Hence, we can select a value $a_0$ such that $\gamma_{a_0} \geq \gamma/2$, and that gives us 
 \begin{align}
     \mathbb{E}[\tau] \leq \mathbb{E}[T_{a_0}] \leq 2\frac{b_0 + a_0 + c \log \lp \frac{2(b_0 + a_0)}{\gamma} \rp}{\gamma}. 
 \end{align}
