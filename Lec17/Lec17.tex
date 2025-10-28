@@ -1,0 +1,224 @@
+\documentclass[12pt]{article}
+\usepackage[english]{babel}
+\usepackage[utf8x]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{../scribe}
+\usepackage{listings}
+
+\usepackage{hyperref}
+% \usepackage{cleveref}
+\usepackage{xcolor}
+\usepackage{natbib}
+\usepackage{tikz}
+\renewcommand{\arraystretch}{1.5}
+\usepackage{nicefrac}
+% \newcommand{\thetahat}{\widehat{\theta}}
+% \Scribe{Shubhanshu Shekhar}
+\Lecturer{Shubhanshu Shekhar}
+\LectureNumber{17}
+\LectureDate{28th October, 2025}
+\LectureTitle{Designing Sequential Tests: Part II}
+
+\lstset{style=mystyle}
+% \usepackage{tikz}
+\usepackage{comment}
+% \usepackage{pgfplots}
+% \usepackage{enumitem}
+\input{../preamble}
+\input{../newMacros}
+
+
+
+\begin{document}
+	\MakeScribeTop
+We continue our discussion of designing sequential anytime-valid tests for observations lying in finite alphabets. In the previous lecture, we designed and analyzed tests for three increasingly complex settings: point null and alternatives, point-vs-composite, and the most general case of composite null versus composite alternatives. For the first two settings, our tests achieve nonasymptotic type-I error control and near-optimal expected stopping time under the alternative~(as we will establish in later lectures). For the case of composite nulls, we constructed a simple but suboptimal test. Additionally, all our results made a strong assumption of bounded log-likelihood ratios, which can often be too restrictive. In this lecture, we will address these two issues. 
+
+First, we will propose and analyze an improved test for the composite-null version of the problem using ideas from \citet[Section~8]{wasserman2020universal}. Then, we will look at the abstract problem of analyzing the expected boundary crossing time of a random walk under weaker assumptions~(than bounded increments), and show that we can essentially obtain the same bound. 
+
+
+\section{Optimal Test for Composite Nulls}
+As in the previous lecture, we assume that $\calX = \{x_1, \ldots, x_m\}$ is a finite alphabet, and $\{\mathbb{P}_\theta = P_\theta^{\infty}:\theta \in \Delta_m\}$ denotes the set of all \iid distributions on $\calX^\infty$. In our notation, $P_\theta$ denotes a probability distribution on $\calX$ with probability mass function~(pmf) $\theta \in \Delta_m$. With this notation, consider the following problem: Given $\{X_n: n\geq 1\} \sim \mathbb{P}_\theta$ and a confidence parameter $\alpha \in (0, 1]$, construct a level-$\alpha$ power-one test to decide between 
+\begin{align}
+    H_0: \theta \in \Theta_0, \qtext{versus} H_1: \theta \in \Theta_1,  \label{eq:composite-test-finite-alphabet}
+\end{align}
+for two disjoint subsets $\Theta_0, \Theta_1$ of the $(m-1)$-dimensional simplex $\Delta_m$. Throughout this lecture, we will assume that $\Theta_0$ is compact and convex. 
+
+\paragraph{Notation.} For any pmf $\theta \in \Delta_m$, and a sequence $x^n = (x_1, \ldots, x_n)$, we will use the shorthand $\theta^n[x^n]$ to represent $\prod_{i=1}^n \theta[x_i]$. For any $\theta \in \Theta_1$, we define $\gamma_\theta(\Theta_0)$~(we will omit the $\Theta_0$ dependence when it is clear from context) as the divergence to the null set; that is, 
+\begin{align}
+\gamma_{\theta} = \inf_{\theta_0 \in \Theta_0} \dkl(P_\theta \parallel P_{\theta_0}), \qtext{and} \theta_0^* \equiv \theta_0^*(\theta) \in \argmin_{\theta_0 \in \Theta_0}\dkl(P_\theta \parallel P_{\theta_0}). 
+\end{align}
+If $\Theta_0$ is a closed subset of $\Delta_m$, then $\gamma_{\theta}$ is well defined, and for the moment, we will not worry about the existence and properties of $\theta^*_0(\theta)$. 
+
+Now, our goal is to construct a level-$\alpha$ stopping time whose expectation under the alternative depends on the term $\gamma_\theta$. We constructed a suboptimal test in the previous lecture for which we showed that 
+\begin{align}
+    \mathbb{E}_{\theta}[\tau] = \mathcal{O}\lp \frac{\log(1/\alpha)}{\bar{\gamma}_\theta} \rp, \qtext{where} \bar{\gamma}_{\theta} = \sum_{x \in \calX} \theta[x] \log \lp \frac{\theta[x]}{\bar{\theta}_0[x]} \rp, \;\text{for}\; \bar{\theta}_0[x] = \sup_{\theta_0 \in \Theta_0} \theta_0[x]. 
+\end{align}
+
+\paragraph{Construction of the improved test.} The idea behind this test is simple: instead of using $\bar{\theta}_0$ that assigns the largest probability among all pmfs in $\Theta_0$ on a per-symbol basis, we replace it with the running maximum likelihood~(ML) parameter from the null, which assigns the largest probability on a  per-sequence basis. This simple idea, introduced by~\citet[Section 8]{wasserman2020universal}, ends up giving us an (as we will show later)  optimal test for this problem. Formally, given the stream of observations $\{X_n: n \geq 1\}$, we define our stopping time as 
+\begin{align}
+    \tau = \inf \{n \geq 1: \UIevalue_n \geq 1/\alpha\}, \qtext{with} \UIevalue_0 = 1, \; \text{and}\; \UIevalue_n = \frac{q_J^n(X^n)}{\sup_{\theta_0 \in \Theta_0} \theta_0[X^n] }.  \label{eq:UI-eprocess}
+\end{align}
+Here, $q_J^n$ denotes the mixture distribution over $\calX^n$ w.r.t. Jeffreys prior~(i.e., the Krichevsky-Trofimov estimator/predictor), and observe that the denominator is simply the maximum likelihood value based on the first $n$ observations: 
+\begin{align}
+q_J^n(x^n) = \int_{\Delta_m} \theta^n[x^n] \pi_J(\theta) d\theta, \qtext{and} \thetahat_{0}^n[x^n] = \sup_{\theta_0 \in \Theta_0}  \theta_0^n[x^n].  
+\end{align}
+\begin{remark}
+    From our discussion of universal prediction, we know that the mixture $q_J^n$ can be written as 
+    \begin{align}
+        q_J^n[x^n] =  \prod_{i=1}^n q_{J}(x_i \mid x^{i-1}), \qtext{with} q_J(x \mid x^{i-1}) = \frac{ 1/2 + \sum_{j=1}^{i-1} \boldsymbol{1}_{x_j=x} }{ m/2 + i-1}. 
+    \end{align}
+    That is, each conditional $q_J(\cdot \mid x^{i-1})$ is the so-called ``add-$1/2$'' estimator, where we simply add a fictitious count of $1/2$ to each $x \in \calX$ to smooth out our estimate. Thus, the numerator in~\eqref{eq:UI-eprocess} can be updated in an incremental and computationally efficient manner. 
+
+    However, the denominator will require recomputing the maximum likelihood value from scratch in each round for most problems. Thus, compared to our previous tests, this particular scheme can end up being significantly more computationally demanding. 
+\end{remark}
+We now proceed to the analysis of the test defined in~\eqref{eq:UI-eprocess}. 
+
+\begin{theorem}
+    \label{theorem:UI-test} For the testing problem with composite null and composite alternative~\eqref{eq:composite-test-finite-alphabet}, the test defined in~\eqref{eq:UI-eprocess} satisfies the following: 
+    \begin{align}
+        &\sup_{\theta_0 \in \Theta_0} \mathbb{P}_{\theta_0}(\tau< \infty) \leq \alpha, \qtext{and}
+          \mathbb{E}_{\theta}[\tau] = \frac{\log(1/\alpha) + \frac{m-1}{2} \log \lp \frac{\log(1/\alpha)}{\gamma_{\theta_1}} \rp}{\gamma_\theta} \lp 1 + o(1) \rp,
+    \end{align}
+    for all $\theta_1 \in \Theta_1$ such that $\gamma_{\theta_1}>0$. 
+    In particular, the finiteness of the expected stopping times also implies the weaker power-one property. 
+\end{theorem}
+
+An important fact about the process $\{\UIevalue_n: n \geq 0\}$ is that it is neither a martingale nor a supermartingale. Yet, as we show in the proof in the next subsection, we can still employ Ville's inequality on this process to control the type-I error. This is because, for every null $\theta_0 \in \Theta_0$, we can show that there exists a nonnegative supermartingale~(or actually a nonnegative martingale) that dominates the process $\{\UIevalue_n: n \geq 0\}$ pointwise. This is one of the defining properties of \emph{e-processes}~\citep[Lemma 6]{ramdas2020admissible}, which are fundamental tools in sequential anytime-valid inference.  
+
+\subsection{Proof of~\Cref{theorem:UI-test}} 
+
+\paragraph{Level-$\alpha$ property.} The proof of the level-$\alpha$ property of the test $\tau$ follows exactly the same argument as in our previous lecture. In particular, observe that  under the null, if $\theta_0 \in \Theta_0$ is the true parameter, then 
+\begin{align}
+    \UIevalue_n = \frac{q_J^n(X^n)}{\thetahat^n_0[X^n]} = \frac{q_J^n(X^n)}{\sup_{\theta \in \Theta_0} \theta^n[X^n]} \; \stackrel{a.s.}{\leq} \; \frac{q_J^n(X^n)}{ \theta_0^n[X^n]} \eqcolon L_n^{\theta_0}. 
+\end{align}
+It is easy to verify that $\{L_n^{\theta_0}: n \geq 0\}$ is a nonnegative supermartingale  with an initial value of $L_0^{\theta_0}=1$, which implies that 
+\begin{align}
+    \mathbb{P}_{\theta_0}(\tau < \infty) = \mathbb{P}_{\theta_0}\lp \exists n \geq 1: \UIevalue_n \geq 1/\alpha \rp \leq   \mathbb{P}_{\theta_0}\lp \exists n \geq 1: L_n^{\theta_0} \geq 1/\alpha \rp \leq \alpha, 
+\end{align}
+where the last inequality follows from an application of Ville's inequality.  Taking a supremum over all $\theta_0 \in \Theta_0$ gives us the first part of~\Cref{theorem:UI-test}. 
+
+\paragraph{Expected Stopping Time.} To study the expected stopping time property, consider the alternative with the true parameter $\theta_1 \in \Theta_1$. By the regret of the universal compression scheme, we know that 
+\begin{align}
+    S_n \coloneqq \log \UIevalue_n \geq  \sup_{\theta \in \Delta_m} \log \theta^n[X^n] - \log {\thetahat^n_0[X^n]} - r_n, \qtext{with} r_n = \frac{m-1}{2}\log n + C_m. 
+\end{align}
+Let $\phat_n$ denote the empirical distribution based on $X^n$. Observe that for any $\theta \in \Delta_m$, we have 
+\begin{align}
+    \log \theta^n[X^n] = n \sum_{x \in \calX} \phat_n[x] \log \theta[x] = n \lp - H(\phat_n) - \dkl(\phat_n \parallel \theta \rp. 
+\end{align}
+By the nonnegativity of relative entropy, this implies that $\phat_n$ is also the MLE (over all $\Delta_m$) based on $X^n$, which means that 
+\begin{align}
+    S_n \geq - nH(\phat_n) - \log \thetahat^n_0[X^n] - r_n. \label{eq:stopping-time-composite-proof-1}
+\end{align}
+Now, we analyze the second term above to see that 
+\begin{align}
+    \log \sup_{\theta_0 \in \Theta_0} \theta_0^n[X^n] &= n \sum_{x \in \calX} \phat_n \log \theta_0[x]  = \sup_{\theta_0 \in \Theta_0} -n  \lp H(\phat_n) + \dkl(\phat_n \parallel \theta_0) \rp \\
+    & = -n H(\phat_n) -n \dkl(\phat_n \parallel \Theta_0), \label{eq:stopping-time-composite-proof-2}
+\end{align}
+where we define $\dkl(\phat_n \parallel \Theta_0)$ as $\inf_{\theta_0 \in \Theta_0} \dkl(\phat_n \parallel \theta_0)$. On combining~\eqref{eq:stopping-time-composite-proof-1} and~\eqref{eq:stopping-time-composite-proof-2}, we get 
+\begin{align}
+    S_n \geq n \dkl(\phat_n \parallel \Theta_0) - r_n. \label{eq:stopping-time-composite-proof-3}
+\end{align}
+Now, we recall the Donsker-Varadhan~(DV) variational representation~(Section 4 of \href{https://github.com/sshekhar17/ECE598/blob/main/Lec3/Lec3.pdf}{Lecture 3})  of relative entropy, to observe that 
+\begin{align}
+\dkl(p \parallel \Theta_0) = \inf_{\theta_0 \in \Theta_0} \sup_{f:\calX \to \mathbb{R}} \lp \mathbb{E}_p[f] - \log E_{\theta_0}[e^f] \rp \eqcolon  \inf_{\theta_0 \in \Theta_0} \sup_{f:\calX \to \mathbb{R}} \Phi(f, \theta_0).
+\end{align}
+
+Now, observe that the function $\Phi$ is concave in $f$~(due to the convexity of log-sum-exp function), and convex in  $\theta$~(due to the concavity of $\log$ function). We have assumed that the null class $\Theta_0$ is closed and convex and that $\mathbb{R}^{\calX}$ is closed. Hence, the conditions for applying the minimax theorem are satisfied, and we have 
+\begin{align}
+    &\dkl(p \parallel \Theta_0) = \sup_{f:\calX \to \mathbb{R}} \inf_{\theta_0 \in \Theta_0} \mathbb{E}_p[f] - \log \mathbb{E}_{\theta_0}[e^f] =  \sup_{f:\calX \to \mathbb{R}}  \mathbb{E}_p[f] - \psi_0(f), 
+\end{align}
+where  $\psi_0(f) \coloneqq \sup_{\theta_0 \in \Theta_0} \log \mathbb{E}_{\theta_0}[e^f]$.  Now, let us fix an arbitrary (for now) $f:\calX \to \mathbb{R}$, which gives a lower bound in the equality above, and using this with~\eqref{eq:stopping-time-composite-proof-3}, we get 
+\begin{align}
+S_n \geq n \dkl(\phat_n \parallel \Theta_0) \geq \mathbb{E}_{\phat_n}[f] - \psi_0(f) - r_n = \underbrace{\sum_{i=1}^n f(X_i) - n \psi_0(f)}_{\coloneqq S_n(f)} - r_n. 
+\end{align}
+Thus, the stopping time $T_f = \inf \{n \geq 1: S_n(f) \geq \log(1/\alpha) + r_n\}$ is an upper bound on $\tau = \inf \{n \geq 1 : S_n \geq \log(1/\alpha)\}$. Now, suppose we choose $f$ to be the element 
+\begin{align}
+    f \in \argmax_{f':\calX \to \mathbb{R}} \mathbb{E}_{\theta_1}[f'] - \psi_0(f')  \quad \implies \quad \mathbb{E}_{\theta_1}[f] - \psi_0(f) = \dkl(\theta_1 \parallel \Theta_0) = \gamma_{\theta_1}. 
+\end{align}
+We now note the following with the above choice of $f$: 
+\begin{itemize}
+    \item The stopping time $T_f$ is finite almost surely. This is because 
+    \begin{align}
+        \lim_{n \to \infty} \frac{1}{n} S_n(f) = \lim_{n \to \infty} \frac{1}{n} \sum_{i=1}^n f(X_i) - \psi_0(f) \; \stackrel{\mathrm{a.s.}}{=}\; \mathbb{E}_{\theta_1}[f(X)] - \psi_0(f) = \gamma_{\theta_1}>0, 
+    \end{align}
+    where we used the assumption on $f$ in the last inequality. On the other hand, since $r_n \asymp \log n$, we have  $(\log(1/\alpha) + r_n)/n \to 0$, which means that $S_n(f)$ eventually crosses the boundary $\log(1/\alpha) + r_n$ with probability $1$; that is, $T_f < \infty$ almost surely.   
+
+\item Since $f(x) = \log \theta_1[x]/\theta^\dagger[x]$ and $\theta^\dagger[x]>0$ for all $x$ such that $\theta_1[x]>0$, we can observe that 
+\begin{align}
+    f(x) - \psi_0(f) \leq f(x) - \sup_{\theta_0\in \Theta_0} \log \sum_{y \in \calX} \theta_0[y]e^{f(y)} \leq f(x) - \log \sum_{y \in \calX} \theta^\dagger[y] \times\frac{\theta_1[y]}{\theta^\dagger[y]} = f(x). 
+\end{align}
+    Hence, the one-step increment of $S_n(f)$ is upper bounded by $C_f \coloneqq \max_{x \in \calX} \log \theta_1[x]/\theta^\dagger[x]$. 
+\end{itemize}
+Together, these two facts imply that we can use Wald's identity to conclude that 
+\begin{align}
+   \mathbb{E}_{\theta_1}[S_{T_f}(f)] =  \mathbb{E}_{\theta_1}[T_f] \mathbb{E}_{\theta_1}[f(X) - \psi_0(f)] \leq \log(1/\alpha) + \frac{m-1}{2} \log \mathbb{E}_{\theta_1}[T_f] + C_m + C_f. 
+\end{align}
+Let $\gamma_{\theta_1}$ denote $\mathbb{E}_{\theta_1}[f(X) - \psi_0(f)]$, and observe that with $y = \mathbb{E}_{\theta_1}[T_f]$, we have 
+\begin{align}
+     y \gamma_{\theta_1} \leq \log(1/\alpha) + \frac{m-1}{2} \log y + C_m + C_f. 
+\end{align}
+By some standard calculations~(see~Appendix~\ref{proof:logarithmic-inequality}) we can show that 
+\begin{align}
+    \mathbb{E}_{\theta_1}[T_f] & \leq \frac{ \log(1/\alpha) + \frac{m-1}{2}\log(\log(1/\alpha)/\gamma_{\theta_1}) + C_1 + C_m }{\gamma_{\theta_1}} + \frac{m-1}{2 \gamma_{\theta_1}} \log^+\lp\frac{m-1}{2\gamma_{\theta_1}} \rp  \\
+    &= \frac{\log(1/\alpha) + \frac{m-1}{2} \log \lp \frac{\log(1/\alpha)}{\gamma_{\theta_1}} \rp}{\gamma_{\theta_1}} \lp 1 + o(1)\rp, 
+\end{align}
+where $o(1)$ indicates terms that go to zero as $\alpha \to 0$~(with fixed $\gamma_{\theta_1})$ or with $\gamma_{\theta_1}) \to 0$~(with fixed $\alpha$). This completes our proof. 
+
+
+\section{Boundary crossing with unbounded increments}
+\label{sec:boundary-crossing}
+
+So far, we have mostly considered the case of random walks with bounded increments. In many important cases, this simplifying condition is not satisfied. Nevertheless, we can still employ the general outlines discussed above to derive bounds on expected stopping times. We illustrate an elementary, although suboptimal (by a factor of $2$) argument in this section, and briefly discuss how this can be improved. 
+
+
+Consider an \iid process $\{Y_i: i \geq 1\}$ and let $S_n = \sum_{i\leq n} Y_i$ denote a random walk. Suppose $\mathbb{E}[|Y_i|]<\infty$ and $\gamma = \mathbb{E}[Y_i]>0$. Consider a boundary $b_n = b_0 + c \log n$ for $n \geq 1$, and define the stopping time 
+\begin{align}
+    \tau = \inf \{n \geq 1: S_n \geq b_n \}.     
+\end{align}
+
+The idea is simple: We select a value $a \in [0, \infty)$ whose exact value will be decided later, and work with truncated increments $U_i = \min \{Y_i, a\}$ with mean $\gamma_a = \mathbb{E}[U_i]$. That is, we define a new process $V_n = \sum_{i=1}^n U_i$, and observe that $V_n \leq S_n$ almost surely. This leads to a new stopping time $T_a$ which is almost surely larger than $\tau$; 
+\begin{align}
+    T_a = \inf \{n \geq 1: V_n \geq b_n = b_0 + c \log n\}. 
+\end{align}
+Now, $T_a$ is the first boundary crossing of the process $\{V_n: n \geq 1\}$ with increments that are bounded from above. Hence, we can conclude that, with $y_a = \mathbb{E}[T_a]$, we have 
+\begin{align}
+    y_a \gamma_a \leq b_0 + c \log y_a + a, \quad \implies y_a \leq \frac{b_0 + a}{\gamma_a} + \frac{c}{\gamma_a} \log (y_a). 
+\end{align}
+Using the inequality from~\Cref{proof:logarithmic-inequality}, we can conclude that for all $a>0$, we have 
+\begin{align}
+    y_a \leq \frac{b_0+ a}{\gamma_a} + \frac{c}{\gamma_a} \lp \log \lp \frac{b_0 + a}{\gamma_a} \rp  + 1\rp + \frac{c}{\gamma_a} \log^+\lp \frac{c}{\gamma_a} \rp  \asymp \frac{b_0 + a + c \log\lp \frac{b_0 + a}{\gamma_a} \rp}{\gamma_a}. 
+\end{align}
+Now, it remains for us to select an appropriate $a$. To do this, note that $\gamma = \mathbb{E}[Y] = \mathbb{E}[U] + \mathbb{E}[(Y-a)^+] = \gamma_a + \mathbb{E}[(Y-a)^+]$. We know that $(Y-a)^+ \overset{a.s.}{\to} 0$ as $a \uparrow \infty$, and hence by \href{https://en.wikipedia.org/wiki/Monotone_convergence_theorem}{monotone convergence theorem}, we can conclude $\lim_{a \uparrow \infty} \mathbb{E}[(Y-a)^+] = 0$, which implies $\lim_{a \uparrow \infty} \gamma_a = \gamma$.  Hence, we can select a value $a_0$ such that $\gamma_{a_0} \geq \gamma$, and that gives us 
+\begin{align}
+    \mathbb{E}[\tau] \leq \mathbb{E}[T_{a_0}] \leq 2\frac{b_0 + a_0 + c \log \lp \frac{2(b_0 + a_0)}{\gamma} \rp}{\gamma}. 
+\end{align}
+\begin{remark}
+Thus, we essentially get the same bound as in the case of bounded increments, but with a leading multiplicative factor $2$ and an additive term $a_0$~(quantifying the size of truncated increments. We can make the  multiplicative constant $2$ go arbitrarily close to $1$ from above, at the cost of increasing the additive constant $a_0 \to \infty$. 
+\end{remark}
+
+\begin{remark}
+    The key issue in deriving  upper bounds on expected stopping times is to analyze the behavior of the last increment; that is, $\mathbb{E}[Y_\tau]$. 
+    Our derivation in this section relied only on the existence of finite first moments, by using a truncation device. If we further assume that increments have finite second moments, then we can get a cleaner bound on the ``overshoot'' of the form 
+    \begin{align}
+        \mathbb{E}[Y_\tau] \leq \frac{\mathbb{E}[(Y_1^+)^2]}{\mathbb{E}[(Y_1^+)]}, 
+    \end{align}
+    which is tighter, and does not lead to an extra multiplicative factor. 
+    We will explore this idea in a homework problem. 
+\end{remark}
+\begin{appendix}
+    \section{A Useful Inequality}
+    \label{proof:logarithmic-inequality}
+    For some constants $A, B, \gamma$, suppose we have a quantity $y>0$ such that 
+    \begin{align}
+        y \leq \frac{A}{\gamma} + \frac{B}{\gamma} \log (1 + y). 
+    \end{align}
+    Then, we have the following bound on $y$: 
+    \begin{align}
+        y \leq \frac{A}{\gamma} + \frac{B}{\gamma} \lp \log \lp \frac A {\gamma} \rp  + 1\rp + \frac{B}{\gamma} \log^+ \lp \frac B {\gamma} \rp. 
+    \end{align}
+\end{appendix}
+\bibliographystyle{abbrvnat}           % if you need a bibliography
+\bibliography{../ref}                % assuming yours is named ref.bib
+
+
+\end{document}
