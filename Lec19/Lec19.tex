@@ -1,0 +1,213 @@
+\documentclass[12pt]{article}
+\usepackage[english]{babel}
+\usepackage[utf8x]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{../scribe}
+\usepackage{listings}
+
+\usepackage{hyperref}
+% \usepackage{cleveref}
+\usepackage{xcolor}
+\usepackage{natbib}
+\usepackage{tikz}
+\renewcommand{\arraystretch}{1.5}
+\usepackage{nicefrac}
+% \newcommand{\thetahat}{\widehat{\theta}}
+% \Scribe{Shubhanshu Shekhar}
+\Lecturer{Shubhanshu Shekhar}
+\LectureNumber{19}
+\LectureDate{November 6th, 2025}
+\LectureTitle{Designing Sequential Tests: Part IV}
+
+\lstset{style=mystyle}
+% \usepackage{tikz}
+\usepackage{comment}
+% \usepackage{pgfplots}
+% \usepackage{enumitem}
+\input{../preamble}
+\input{../newMacros}
+
+
+
+\begin{document}
+	\MakeScribeTop
+We continue our discussion of the bounded mean testing problem that we introduced in the previous lecture. We concluded the last lecture with an analysis of the expected value of the stopping time under the alternative~(when $\mu_X \neq m$):
+\begin{align}
+    \mathbb{E}_{P_X}[\tau] \leq \frac{\log(1/\alpha) + \frac 1 2 \log\lp \frac{\log(1/\alpha) }{\gamma^*(P_X, m)} \rp + \calO(1)}{\gamma^*(P_X, m)},  
+\end{align}
+where the term $\gamma^*(P_X, m)$ is defined as
+\begin{align}
+    \gamma^*(P_X, m) = \sup_{\lambda \in \lb \frac {-1}{1-m}, \frac{1}{m} \rb}  \mathbb{E}_{P_X}\lb \log(1 + \lambda(X-m)) \rb. \label{eq:gamma-star-1}
+\end{align}
+In this lecture, we will focus on the following topics: (i) We will outline how  $\gamma^*(P_X, m)$ defined above is simply the dual form of the relative entropy between $P_X$ and the class of null distributions. (ii) Next, we will go beyond the case of bounded observations and consider mean testing with sub-Gaussian and heavy tailed distributions.
+ 
+
+\section{Dual formulation of mean-constrained relative entropy}
+\label{sec:dual-formulation}
+
+The main result of this section is the following. 
+\begin{theorem}
+    \label{theorem:dual-klinf} Let $P \in \calP([0,1])$ be a probability distribution supported on $[0,1]$ with mean $\mu_X$. Then, for any $m \in [0,1]$, we have the following: 
+    \begin{align}
+        \gamma^*(P_X, m) \coloneqq \sup_{\lambda \in \lb \frac {-1}{1-m}, \frac 1 m \rb} \mathbb{E}_{P_X}[\log(1+\lambda(X-m))] \; = \; \inf_{\substack{Q \in \calP([0,1]) \\ \mathbb{E}_{Q}[X]=m}} \dkl(P_X \parallel Q) \eqcolon \Gamma(P_X, m). 
+    \end{align}
+\end{theorem}
+We will not prove this result in full generality. Instead we will illustrate the key ideas by focusing on the case of $P$ supported on some finite alphabet contained in $[0,1]$. Let $P_X$ be denoted by its pmf $(p_1, \ldots, p_k)$ where $p_i = P_X(\{x_i\})$ for all $x_i \in \calX \subset [0,1]$ with $|\calX|=k$. Then, for any other distribution in $\calP([0,1])$ with mean $m$ and with $Q(\{x_i\})=q_i$ for $x_i \in \calX$, we have 
+\begin{align}
+   \Gamma(P_X, m) = \inf_{Q} \sum_{i=1}^k p_i \log \lp {p_i}{q_i} \rp, \; \text{subject to}\;  \int x dQ(x) = m, \; \int dQ(x)=1. 
+\end{align}
+We can prove this result in the following steps: 
+\begin{itemize}
+    \item The first step is to observe that  we can show that without loss of optimality, we can restrict our attention to distributions $Q$ supported in $\calX \cup \{0, 1\}$. 
+    \item Next, we can verify that Slaters constraint satisfaction conditions are satisfied, and hence strong duality holds. That is, there exists a distribution supported on $\calX \cup \{0,1\}$ such that it is strictly positive at each point, and satisfies the mean constraint.
+    
+    \item With these observations, we can write the Lagrangian of this problem as 
+    \begin{align}
+        \calL(P, Q, \lambda, c) = \sum_{i=1}^k p_i \log \frac {p_i}{q_i} + \lambda(m - \sum_{i=1}^k q_i x_i - Q(\{1\})) + c(1 - \sum_{x \in \calX \cup\{0,1\}} Q(\{x\})). 
+    \end{align}
+    \item Then, by taking the derivative of $\calL$ with respect to $q_i$, we can show that 
+    \begin{align}
+        \frac{\partial \calL}{\partial q_i} = 0 = - \frac{p_i}{q^*_i} - \lambda x_i - c, \quad \implies \quad q^*_i  = \frac{p_i}{\lambda x_i + c}. 
+    \end{align}
+    \item For simplicity assume that $\{0, 1\} \subset \calX$. Then, we can enforce the constraints 
+    \begin{align}
+        \sum_{i=1}^k \frac{p_i}{\lambda x_i + c} = 1, \qtext{and} \sum_{i=1}^k \frac{p_i x_i}{\lambda x_i + c} = m. 
+    \end{align}
+    Now, multiply the first equality by $c$ and the second by $\lambda$ and add the two to get 
+    \begin{align}
+        c + \lambda m = \sum_{i=1}^k \lp c\lp  \frac{p_i}{\lambda x_i + c} \rp + \lambda \lp \frac{p_i x_i}{\lambda x_i + c} \rp \rp = \sum_{i=1}^k \lp \frac{p_i}{\lambda x_i + c} \lp c + \lambda x_i \rp \rp = 1. 
+    \end{align}
+    Thus, replacing $c = 1-\lambda m$, we get that $q^*_i = p_i/\lp 1 + \lambda (x_i-m) \rp$, and plugging this into the expression of $\calL$, we get the required dual statement. 
+\end{itemize}
+The discussion above is quite informal and skips several details; please see~\citet[\textsection~4]{honda2010asymptotically} for a more rigorous treatment. 
+
+\section{Beyond Bounded Observations}
+\label{sec:unbounded-observations}
+We continue with our study of the problem of mean testing: given a stream of observations $\{X_n: n \geq 1\} \simiid P_X$ with an unknown mean $\mu_X$, we want to decide between 
+\begin{align}
+    H_0: \mu_X = m, \qtext{versus} H_1: \mu_X \neq m. \label{eq:mean-testing-problem}
+\end{align}
+But now we relax the assumption of bounded random variables. We first look at a class of sub-Gaussian random variables, which consists of random variables that have ``Gaussian like'' moment generating function(MGF) or light tails. After that we go even further and look at the class of heavy tailed distributions, and construct a test based on Catoni's supermartingales. 
+\subsection{Sub-Gaussian Random Variables}
+\label{subsec:subgaussian}
+Let us begin with the definition of sub-Gaussian random variables. 
+\begin{definition}
+    \label{def:subgaussian}
+    We say a random variable $X$ is said to be $\sigma^2$-sub-Gaussian if the following equivalent conditions hold: 
+    \begin{itemize}
+        \item Moment generating function~(MGF) formulation. 
+        \begin{align}
+            \forall \; \lambda \in \mathbb{R}: \quad \mathbb{E}\lb e^{\lambda (X-\mathbb{E}[X])} \rb  \leq \exp \lp \frac{\sigma^2 \lambda^2}{2} \rp. 
+        \end{align}
+        \item Tail bound formulation.
+        \begin{align}
+            \forall\; t \geq 0: \quad \mathbb{P}(|X-\mu| \geq t ) \leq 2 \exp\lp  - \frac{t^2}{2 \sigma^2}\rp. 
+        \end{align}
+        \item Moment growth formulation. 
+        \begin{align}
+            \forall \; p \geq 1: \quad \lp\mathbb{E}[|X-\mathbb{E}[X]|^p]\rp^{1/p} \leq C \sigma \sqrt{p}, 
+        \end{align}
+        for some universal constant $C$. 
+    \end{itemize}
+\end{definition}
+The term $\sigma^2$ is often referred to as a ``variance proxy'' in the above definition. We will mostly use the MGF definition in designing sequential tests using supermartingales. Before constructing sequential tests, let us first look at some examples. 
+\begin{description}
+    \item[Gaussian.] The motivating distribution behind this definition. If $X \sim N(\mu, \sigma^2)$, then it is easy to verify that the MGF in this case is 
+    \begin{align}
+       \mathbb{E}[e^{\lambda(X-\mu)}] =  \frac{1}{\sqrt{2\pi \sigma^2}}\int_{\mathbb{R}} e^{\lambda y} e^{-\frac{y^2}{2 \sigma^2}} dy = e^{\frac{\lambda^2 \sigma^2}{2}} \frac{1}{\sqrt{2\pi \sigma^2}} \int_{\mathbb{R}} e^{(y- \sigma^2\lambda)^2/2\sigma^2} dy = e^{\frac{\lambda^2 y^2}{2 \sigma^2}}
+    \end{align}
+    \item[Bounded Random Variables.] If $X$ is a $[a,b]$-valued random variable, then we have $\mathbb{E}\lb e^{\lambda(X-\mu)} \rb \leq \exp \lp \frac{(b-a)^2 \lambda^2}{8} \rp$. 
+    This is known as Hoeffding's lemma, and it implies that a bounded random variable is $(b-a)^2/4$-sub-Gaussian. 
+    
+    \item[Random Variables with Bounded Differences.] \sloppy  Suppose $(X_1, \ldots, X_n)$ are independent random variables taking values in some space $\calX$, and let $f:\calX^n \to \mathbb{R}$ is a function satisfying a bounded difference property: $\sup_{x_i, x'_i \in \calX} |f(x_1, \ldots, x_{i-1}, x_i, x_{i+1}, \ldots, x_n) - f(x_1, \ldots, x_{i-1}, x'_{i}, x_{i+1}, \ldots, x_n)| \leq c$ for some constant $0<c<\infty$. Then, we can show (McDiarmid's lemma) that $Y = f(X_1, \ldots, X_n)$ is $nc^2/4$ sub-Gaussian. 
+\end{description}
+
+The MGF definition of sub-Gaussianity almost immediately suggests a supermartingale definition. In particular, observe that 
+\begin{align}
+    Z = \exp\lp \lambda (X-\mu_X) - \frac{ \lambda^2 \sigma^2}{2} \rp, \quad \implies \quad \mathbb{E}[Z] = e^{-\frac{\lambda^2 \sigma^2}{2}} \mathbb{E}\lb e^{\lambda(X-\mu_X)} \rb  \leq 1. 
+\end{align}
+For any fixed $\lambda \in \mathbb{R}$, the process 
+\begin{align}
+    W_0(\lambda) = 1, \quad W_n(\lambda) = W_{n-1}(\lambda) \exp \lp \lambda(X_n - m) - \frac{\lambda^2 \sigma^2}{2} \rp, 
+\end{align}
+is a nonnegative supermartingale under the null in~\eqref{eq:mean-testing-problem}, which means we can define a stopping time $\tau(\lambda) = \inf \{n \geq 1: W_n(\lambda) \geq 1/\alpha\}$. However, if the true mean differs from $m$, then it is not too difficult to show that the expected stopping time is controlled by 
+\begin{align}
+    \mathbb{E}\lb \lambda(X-m) - \frac{\lambda^2 \sigma^2}{2} \rb = \lambda (\mu_X - m) - \frac{\lambda^2 \sigma^2}{2}. 
+\end{align}
+Thus, to minimize the expected stopping time,  the optimal choice of the tuning parameter $\lambda$ is 
+\begin{align}
+    \lambda^* \equiv \lambda^*(P_X, m) = \frac{(\mu_X - m)}{\sigma^2}, \quad \implies \quad \mathbb{E}[\tau(\lambda^*)] \asymp \frac{2 \sigma^2 \log(1/\alpha)}{|\mu_X-m|^2}. 
+\end{align}
+Since this depends on the unknown mean, a natural idea is to select a data-dependent predictable sequence of $\{\lambda_n: n \geq 1\}$ with $\lambda_n = (1/\sigma^2) \frac{1}{n-1} \sum_{i=1}^{n-1} (X_i-m)$. 
+
+
+\paragraph{A mixture approach.} An alternative approach is to take a mixture over all $\lambda$ values. For example, let 
+\begin{align}
+    W_n^{\pi} = \int \prod_{i=1}^n e^{\lambda (X_i - m) - \frac{\sigma^2\lambda^2}{2}} \pi(\lambda)d\lambda,
+\end{align}
+where $\pi = N(0, \rho^2)$. Then, we can show that with $S_n = \sum_{i=1}^n (X_i -m)$, we have 
+\begin{align}
+    W_n^{\pi} = \frac{1}{1 + n\rho^2  \sigma^2 } \exp \lp \frac{\rho^2 S_n^2}{2(1 + n\rho^2 \sigma^2) } \rp. 
+\end{align}
+Since $\{W_n^{\pi}: n \geq 0\}$ is also a nonnegative supermartingale  with an initial value of $1$, we can define a test as level-$\alpha$ test $\tau_\pi = \inf \{n \geq 1: W_n^{\pi} \geq 1/\alpha\}$. Another way of interpreting this test is that it stops as soon as 
+\begin{align}
+    |S_n| \geq b_n \coloneqq \sqrt{ \frac{1+n\rho^2 \sigma^2}{\rho^2} \lp  \log \frac 1 {\alpha} + \log(1+ n \rho^2 \sigma^2) \rp}. \label{eq:boundary-gaussian-mixture}
+\end{align}
+For this test, we can show the following. 
+\begin{proposition}
+    \label{prop:Gaussian-mixture-upper-bound} For the test $\tau_\pi$, if the alternative is true, and the true mean $\mu_X = m + \delta$, then, we have 
+    \begin{align}
+        \mathbb{E}[\tau_\pi] = \calO\lp  \frac{\sigma^2 \log(1/\alpha \delta^2)}{\delta^2} \rp, 
+    \end{align}
+    where the $\calO(\cdot)$ hides leading multiplicative constants and lower order terms~(i.e., additive constants and $\log\log(1/\alpha)$ terms). 
+\end{proposition}
+
+\begin{proof}
+    When the null is not true, we expect $|S_n| \asymp n |\delta|$ to grow approximately at a linear rate, and the boundary $b_n \asymp \sigma \sqrt{n}$ grows at a square-root rate. Hence, the expected stopping time should be $\asymp \sigma^2/\delta^2$. 
+
+    To formally prove this, consider the term $|S_n| = |\sum_{i=1}^n X_i -m|$. Because of the sub-Gaussian property of the random variables, we know that $U_n = \sum_i X_i - \mu_X$ is $n \sigma^2$-sub-Gaussian. That is, for any $a \in \mathbb{R}$, we have 
+    \begin{align}
+        \mathbb{P}(|U_n| > n \epsilon) \leq 2 e^{\frac{n \sigma^2 a^2}{2}} e^{-a \epsilon}. 
+    \end{align}
+    On optimizing for $a$, we get that $\mathbb{P}(|U_n| > n \epsilon) \leq 2 e^{-n \frac{\epsilon^2}{2 \sigma^2}}$, which means that with probability at least $1-2/n^2$, we have the event $E_n = \{ |U_n| \leq 2 \sigma \sqrt{n\log n}\}$ for all $n \geq 1$. In other words, we have $|S_n| = |U_n + n \delta| \geq n|\delta| - |U_n| \geq n |\delta| - 2\sigma \sqrt{n\log n}$ with probability at least $1 - 2/n^2$ under the event $E_n$. This implies that 
+    \begin{align}
+        \mathbb{E}[\tau_\pi] = \sum_{n = 1}^{\infty} \mathbb{P}(\tau_\pi \geq n) \leq \sum_{n=1}^{\infty} \lp \mathbb{P}(\{\tau \geq n \} \cap E_n) + \mathbb{P}(E_n^c) \rp = \frac{\pi^2}{3} +  \sum_{n=1}^{\infty}\mathbb{P}(\{\tau \geq n \} \cap E_n). 
+    \end{align}
+    Now, let $N_\pi$ be defined as 
+    \begin{align}
+        N_\pi = \inf \left\{ n \geq 1: n |\delta| > 2 \sigma \sqrt{\frac{\log n}{n}} + b_n \right\} = \calO\lp \frac{\sigma^2 \log(1/\alpha \delta^2) }{\delta^2} \rp, 
+    \end{align}
+    and observe that for all $n > N_\pi$, we have $\mathbb{P}(\{\tau \geq n\} \cap E_n) = 0$. Hence, we get the required bound $\mathbb{E}[\tau_\pi] = \calO(N_\pi)$. 
+
+\end{proof}
+\subsection{Heavy-Tailed Observations}
+\label{subsec:heavy-tailed}
+    Sub-Gaussian distributions are also called ``light tailed'' distributions as the probability that they exceed a certain threshold decays similar to a Gaussian random variable. We now further relax this condition and only consider random variables with finite variance. We assume that the variance (or an upper bound) is known to us. 
+
+    Surprisingly, even under these minimal assumptions we can construct test martingales for the problem introduced in~\eqref{eq:mean-testing-problem}. The key idea is to use \emph{Catoni's influence functions} $\phi:\mathbb{R} \to \mathbb{R}$, which is an increasing function satisfying $-\log(1 - z + z^2/2) \leq \phi(z) \leq \log(1 + z +z^2/2)$ for all $z \in \mathbb{R}$. A natural choice is 
+    \begin{align}
+        \phi(z) = \begin{cases}
+            \log(1+z + z^2/2), & \text{ if } z \geq 0 \\
+            -\log(1-z + z^2/2), & \text{ if } z <0,
+        \end{cases}    
+    \end{align}
+    which is an odd and increasing function. Using this function, with any predictable sequence $\{\lambda_n: n \geq 1\}$, 
+    \begin{align}
+        M_n^+ = \prod_{i=1}^n \exp\lp \phi(\lambda_i(X_i-m)) - \frac{1}{2}\lambda_i^2 \sigma^2 \rp, \quad M_n^- =  \prod_{i=1}^n \exp\lp -\phi(\lambda_i(X_i-m)) - \frac 1 2 \lambda_i^2 \sigma^2 \rp, 
+    \end{align}
+    are both nonnegative supermartingales under the null. When the null is not true, and $\mu_X > m$~(resp. $\mu_X<m$), we expect the process $M_n^+$~(resp. $M_n^-$) to grow rapidly. As a result, a natural idea is to take an average of the two 
+    \begin{align}
+        W_n = \frac{1}{2} \lp M_n^+ + M_n^- \rp, \quad \tau_\phi = \inf \{n \geq 1: W_n \geq 1/\alpha\}. 
+    \end{align}
+    As in the earlier case, we can again analyze the expected stopping time of the above test. 
+
+    \paragraph{Intuition behind the Catoni supermartingale.} Since the random variable only has a finite second moment, we cannot really define supermartingales that rely on moment generating functions. Instead, what we do is to first ``soft-truncate'' the random variable using $\phi$, that ensures 
+    \begin{align}
+        e^{\phi(\lambda (X-m))} \leq 1 + \lambda (X-m) + \frac{1}{2} \lambda^2 (X-m)^2. 
+    \end{align}
+    Thus, a finite second moment of $X$ is sufficient to have a finite mgf of $e^{\phi(\lambda(X-m))}$. When $z \approx 0$, the function $\phi(z) \approx z$; thus the influence function $\phi$ behaves like an identity function near the origin. But when $|z|$ is large, the influence function compresses it to a logarithmic scale. 
+
+
+    \bibliographystyle{abbrvnat}
+    \bibliography{../ref}
+\end{document}
