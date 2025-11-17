@@ -1,0 +1,219 @@
+\documentclass[12pt]{article}
+\usepackage[english]{babel}
+\usepackage[utf8x]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{../scribe}
+\usepackage{listings}
+
+\usepackage{hyperref}
+% \usepackage{cleveref}
+\usepackage{xcolor}
+\usepackage{natbib}
+\usepackage{tikz}
+\renewcommand{\arraystretch}{1.5}
+\usepackage{nicefrac}
+% \newcommand{\thetahat}{\widehat{\theta}}
+% \Scribe{Shubhanshu Shekhar}
+\Lecturer{Shubhanshu Shekhar}
+\LectureNumber{20}
+\LectureDate{November 11th, 2025}
+\LectureTitle{Designing Sequential Tests: Part V}
+
+\lstset{style=mystyle}
+% \usepackage{tikz}
+\usepackage{comment}
+% \usepackage{pgfplots}
+% \usepackage{enumitem}
+\input{../preamble}
+\input{../newMacros}
+
+
+
+\begin{document}
+	\MakeScribeTop
+    In this and the next lecture, we will study an important nonparametric testing problem called two-sample testing. We will begin with a discussion of the two-sample testing problem in the non-sequential setting and discuss a general approach for designing such tests based on statistical distances. We will instantiate this idea for the case of real-valued observations using the Kolmogorov-Smirnov~(KS) metric, and end the lecture by presenting a scheme for designing a sequential analog of the KS test. 
+
+    \section{Two Sample Testing Problem}
+    Let $\calX$ denote any general alphabet, and let $\{(X_i, Y_i): 1 \leq i \leq n\}$ denote a $n$ \iid $\calX$-valued pairs of random variables drawn from a product distribution $P_X \times P_Y$. Then, the goal is to test 
+    \begin{align}
+        H_0: P_X = P_Y, \qtext{versus} H_1: P_X \neq P_Y. \label{eq:two-sample-def}
+    \end{align}
+    Equivalently, we can restate this problem as 
+    \begin{align}
+        &H_0: P_{XY} \in \calP_0 \qtext{versus} H_1: P_{XY} \in \calP_1, \qtext{with} \\
+        &\calP_0 = \{P \times P: P \in \calP(\calX)\}, \qtext{and} \calP_1 = \{P \times Q: P \neq Q \in \calP(\calX)\}. 
+    \end{align}
+    As the above formulation illustrates, both the null and hypothesis classes are composite and nonparametric. This problem arises in various applications, such as: 
+    \begin{itemize}
+        \item \textbf{A/B Testing.} Used for comparing two-versions of a website, and identifying whether they lead to the same amount of traffic or not.  
+        \item \textbf{Astrophysics:} Two-sample tests are often used to compare the radiations from different regions of a galaxy. 
+        
+        \item \textbf{Machine Learning:} Two-sample tests can be used for detecting shifts in distributions between test and training datasets. 
+    \end{itemize}
+
+     \begin{remark}
+         In general, we may have different number of $X$ and $Y$ observations. We assume the case of paired observations for simplicity. 
+     \end{remark}
+
+\subsection{General Idea}
+    A general approach for designing two-sample tests proceeds as follows: We  choose a distance measure $D: \calP(\calX) \times  \calP(\calX) \to [0, \infty]$, and then given the samples $\{X_i: i \in [n]\}$ and $\{Y_i: i \in [n]\}$, we construct a statistic 
+    \begin{align}
+        T_n \approx D(\Phat_n, \Qhat_n), 
+    \end{align}
+    where we use $\approx$ to indicate that often the statistic we construct is not exactly the one obtained by plugging-in $\Phat_n, \Qhat_n$ into $D$. For instance, we may need debiasing in some cases. Now, assuming $D$ is a metric, it follows that $D(P_X, P_Y) = 0$ under $H_0$ and $>0$ under $H_1$. As a result, a suitably scaled version of the statistic $T_n$~(e.g., by $\sqrt{n}$ or $n$ depending on the situation) will be expected to take small values under $H_0$, and larger values under $H_1$. Thus, a two-sample test can be defined as 
+    \begin{align}
+        \Psi(X^n, Y^n) = \boldsymbol{1}_{T_n > t^*_\alpha}, \qtext{where} t^*_\alpha = \inf \{t \in \mathbb{R}: \mathbb{P}_{H_0}(T_n > t) \leq \alpha\}. 
+    \end{align}
+    Now, the crucial part in designing a (non-sequential) two-sample test is finding the right critical value to reject the null. The optimal value $t^*_\alpha$ depends on the unknown distribution $P_X= P_Y$, and thus cannot be directly employed. In practice, the following methods are often used: 
+    \begin{itemize}
+        \item \textbf{Permutation Test.} If the null is true, then the dataset $\{Z_i: 1 \leq i \leq 2n\}$ is \iid from $P_X$, where $Z_i = X_i \boldsymbol{1}_{i \leq n} + Y_{i-n} \boldsymbol{1}_{i>n}$. This means that for any permutation $\sigma$ over the set $[2n]$, $\{Z_{\sigma(i)}: i \in [2n]\} \overset{d}{=} \{Z_i: i \in [2n]\}$. Let $T_n^\sigma$ denote a statistic computed using a permuted dataset (with the first $n$ observations considered $X$'s).  Now, suppose we draw $M$ \iid permutations, and re-compute $\{T_n^{\sigma_j}: 1 \leq j \leq M\}$, then by the invariance to permutations, the rank of the original statistic $R = 1 + |\{j: T_n^{\sigma_j} > T_n\}|$ is  uniformly distributed in the set $\{1, \ldots, M+1\}$. We can use this fact to calibrate the test. 
+        
+        \item \textbf{Asymptotic Null.} In some instances, we can show that the a properly scaled statistic, e.g., $\sqrt{n} T_n \Rightarrow P_0$, for some tractable limiting null distribution $P_0$~(such as Gaussian, chi-squared, etc.). Hence, we can set $t_\alpha$ to be the $(1-\alpha)$ quantile of the limiting null distribution, and obtain an (asymptotically valid) level-$\alpha$ test. 
+        
+        \item \textbf{Concentration Inequalities.} Finally, in some situations, we can establish non-asymptotic deviation results of the form: $\mathbb{P}(T_n > \epsilon) \leq f(\epsilon)$ for some closed-form function $f$. We can then invert this to set $t_\alpha = f^{-1}(\alpha)$, and get a valid test. In practice, this approach often leads to excessively conservative tests. 
+    \end{itemize}
+
+\subsection{Non-sequential KS Test}
+\label{subsec:non-seq-KS}
+To illustrate the general discussion in the last subsection, we consider the case of $\calX = \R$-valued observations  $\{(X_i, Y_i): 1 \leq i \leq n\}$. In this case, the distributions $P_X$ and $P_Y$ are completely specified by their CDFs, denoted by $F_X$ and $F_Y$. Based on this fact, we consider a test associated with the KS-distance, defined as 
+\begin{align}
+    D_{KS}(F_X, F_Y) = \|F_X - F_Y\|_{\infty} = \sup_{u \in \R} |F_X(u) - F_Y(u)|. 
+\end{align}
+In other words, the KS distance between two real-valued distributions is the pointwise supremum of the absolute deviation between their CDFs. Thus, given the dataset, we can define the statistic 
+\begin{align}
+    T_n = \sup_{u \in \calX} |\hat{F}_{X,n}(u)  - \hat{F}_{Y,n}(u)|. 
+\end{align}
+Note that this can be done in $O(n \log n)$ cost: we simply need to sort the observations~($O(n \log n)$  operation), and then check the difference at the jumps. 
+
+To calibrate the test, we can use the permutation test, but that can often be computationally too expensive. An alternative is to use the Dvoretzky-Kiefer-Wolfowitz~(DKW) inequality, which says  
+\begin{align}
+    \mathbb{P}( D_{KS}(\hat{F}_n, F) > \epsilon ) \leq 2 e^{-2n\epsilon^2} \quad \implies \quad   \mathbb{P}_{H_0}(T_n > \epsilon) \leq 4e^{-2n\epsilon^2}, 
+\end{align}
+where the second statement follows by the triangle inequality~(and the fact that $F_X = F_Y$ under $H_0$).    This inequality suggests a critical value of 
+\begin{align}
+    t_\alpha = \sqrt{ \frac{\log(4/\alpha)}{2 n} }. 
+\end{align}
+This approach gives us a nonasymptotic control over the type-I error, but often leads to a loss of power. 
+
+An alternative is to look at the asymptotic null distribution of the statistic $T_n$. It turns out that 
+\begin{align}
+    \sqrt{\frac n 2} T_n \; \Rightarrow \; \sup_{0 \leq u \leq 1} |\mathbb{B}(u)|  \quad \implies \quad 
+    t_\alpha^{\mathrm{asy}} = c_\alpha \sqrt{\frac{2}{n} }, \; \mathbb{P}(\sup_{0 \leq u \leq 1} |\mathbb{B}(u)| \leq c_\alpha) = 1-\alpha. 
+\end{align}
+where $\mathbb{B}(u)$ is the Brownian bridge~(it is the usual Brownian motion, with the constraint that the end points are equal to $0$). The supremum of the Brownian bridge follows the so-called Kolmogorov distribution, and it has a closed form  expression of its CDF which can be used to calculate $c_\alpha$. 
+
+
+ 
+\section{Sequential Kolmogorov-Smirnov~(KS) Test}
+\label{sec:sequential-KS}
+One key drawback of the non-sequential approach is that the sample-size $n$ must be decided before implementing the test, and hence there is always a chance of allocating too many observations on a simple problem~(thus wasting resources), or allocating too few observations on a difficult problem~(leading to inconclusive tests). These issues can be addressed in a sequential setting. 
+
+We assume that we have a stream of paired observations $\{(X_i, Y_i): i \geq 1\}$ drawn \iid from a product distribution $P_X \times P_Y$, and as before, we want to construct a level-$\alpha$  power-one test for the problem described in~\eqref{eq:two-sample-def}. Formally, we want to construct a stopping time $\tau$ such that 
+\begin{align}
+    \mathbb{P}_{H_0}(\tau < \infty) \leq \alpha, \qtext{and} \mathbb{P}_{H_1}(\tau < \infty) = 1. 
+\end{align}
+We discuss a simple approach customized for the case of KS tests in the next subsection. 
+    
+
+Note that we can rewrite the KS metric as 
+\begin{align}
+    D_{KS}(P_X, P_Y) = \sup_{g \in \calG} \mathbb{E}_{P_X}[g(X)] - \mathbb{E}_{P_Y}[g(Y)], 
+\end{align}
+where we define $\calG = \{\boldsymbol{1}_{(-\infty, x]}, -\boldsymbol{1}_{(-\infty, x]}: x \in \mathbb{R}\}$ as the set of all semi-infinite intervals with a $\pm$ sign. Since for every $P_X \neq P_Y$, we know that $D_{KS}(P_X, P_Y) >0$, we can conclude that there exists a $g^* \equiv g^*(P_X, P_Y)$ such that 
+\begin{align}
+    0 < D_{KS}(P_X, P_Y)  = \mathbb{E}_{P_X}[g(X)] - \mathbb{E}_{P_Y}[g(Y)]. 
+\end{align}
+Such a $g^*$ is referred to as the ``witness function'' of $P_X, P_Y$ in $\calG$.  If on the other hand, the null distribution is true, then for all $g \in \calG$~(and beyond), we must have $\mathbb{E}_{P_X}[g(X)] - \mathbb{E}_{P_Y}[g(Y)]$. So if someone gave us the witness function $g^*$, then the two-sample problem reduces to that of (bounded) mean testing, and we can solve it by our general betting/portfolio based approach discussed in the previous lectures. 
+
+But since we don't know $g^*(P_X, P_Y)$, a natural idea is to learn it on the fly. That is, we can set 
+\begin{align}
+    g_n \in \pm\boldsymbol{1}_{(-\infty, u_n]} \in  \argmax_{ u \in \mathbb{R}} |\hat{F}_{n-1,X}(u) - \hat{F}_{n-1,X}(u)|. 
+\end{align}
+This suggests the following definition of a sequential KS test. 
+\begin{definition}
+    \label{def:seq-KS-test} 
+    Set $W_0=1$, $g_1 = \boldsymbol{1}_{\mathbb{R}}$, and for $t=1, 2, \ldots$: 
+    \begin{itemize}
+        \item Calculate $g_n$ from the previous observations.
+        \item Calculate $\lambda_n \in [-1/2, 1/2]$ based on the previous observations.
+        \item Observe the new pair $(X_n, Y_n)$.  
+        \item Update $W_n \leftarrow W_{n-1} \times (1 + \lambda_n(g_n(X_n) - g_n(Y_n)))$. 
+        \item Reject the null if $W_n \geq 1/\alpha$. 
+    \end{itemize}
+    In other words, $\tau_{KS} = \inf \{n \geq 1: W_n \geq 1/\alpha\}$. 
+\end{definition}
+If the functions $g_n$ approximate $g^*$ sufficiently well with high probability as $n$ increases, we expect that the test defined above should be able to identify the alternatives in a near-optimal manner. We formalize this intuition in the next subsection. 
+
+\subsection{Analysis of the Sequential KS Test}
+\label{subsec:seq-KS-test}   
+
+\begin{theorem}
+    \label{theorem:sequential-ks-test}
+    The sequential KS test introduced in~\Cref{def:seq-KS-test} satisfies the following: 
+    \begin{align}
+        \mathbb{P}_{H_0}(\tau_{KS} < \infty) \leq \alpha, \qtext{and} 
+        \mathbb{P}_{H_1}(\tau_{KS} < \infty) = 1. 
+        \end{align}
+        Furthermore, if $P_X, P_Y$ are compactly supported, then we also have the following bound on the expected stopping time: 
+        \begin{align}
+        \mathbb{E}_{H_1}[\tau_{KS}] = \calO\lp \frac{\log(1/\alpha \Delta)}{\Delta^2} \rp, 
+    \end{align}
+    where $\Delta = D_{KS}(P_X, P_Y)$. 
+\end{theorem}
+
+\emph{Proof of the level-$\alpha$ property.} This follows directly from the fact that the process $\{W_n: n \geq 0\}$ is a nonnegative martingale under the null. 
+
+\emph{Proof of the power-one property.} We only provide an outline of the proof. First, note that if the regret of the ``betting strategy'' $\{\lambda_n: n \geq 1\}$ is less than $c \log n$ for some constant $c>0$, then we have the following, with $v_n = g_n(X_n) - g_n(Y_n)$: 
+\begin{align}
+    \log W_n \geq \lp\sup_{\lambda \in [-1/2, 1/2]} \sum_{i=1}^n \log\lp 1 + \lambda v_i \rp  \rp- c \log n. 
+\end{align}
+By using a logarithmic lower bound, $\log(1+ \lambda v) \geq \lambda v - \lambda^2 v^2$, we can further lower bound this with 
+\begin{align}
+    \log W_n \geq  \sup_{\lambda \in [-1/2, 1/2]} \lambda S_n  - \lambda^2 M_n - c \log n, 
+\end{align}
+where we use $S_n = \sum_{i=1}^n v_i$, and $M_n = \sum_{i=1}^n v_i^2$. Now, using the fact that $M_n \leq n$, we get the further lower bound 
+\begin{align}
+    \log W_n \geq \sup_{\lambda \in [-1/2, 1/2]} \lambda S_n - \lambda^2 n - c \log n, \label{eq:ks-analysis-1}
+\end{align}
+which is optimized at $\lambda = S_n/2n \in [-1/2, 1/2]$. Hence, we can conclude that 
+\begin{align}
+    \frac 1 n \log W_n \geq \frac {S_n^2} {4n^2}  - \frac{c\log n}{n}. 
+\end{align}
+To show the power-one property, we can use the fact that under some regularity conditions, $g_n \to g^*$ almost surely, and hence $S_n/n \to \Delta = D_{KS}(P_X, P_Y) >0$ almost surely (by Cesaro means theorem). Hence, $\liminf_{n \to \infty} \log W_n /n >0$ almost surely, which implies the power-one property. 
+
+
+\emph{Proof of the expected stopping time.} To analyze the expected stopping time, we start with the fact that 
+\begin{align}
+    \mathbb{E}[\tau] = \sum_{n \geq 1} \mathbb{P}(\tau \geq n) = \sum_{n \geq 1}\mathbb{P}\lp \frac 1 n \log W_n  < \frac{\log (1/\alpha)}{n}\rp. 
+\end{align}
+Now, from~\eqref{eq:ks-analysis-1}, we can further upper bound this with 
+\begin{align}
+    \mathbb{E}[\tau] & \leq \sum_{n \geq 1} \mathbb{P}\lp \frac{S_n^2}{4n^2} < \frac{\log(1/\alpha)}{n} + \frac{c \log n}{n} \rp = \sum_{n \geq 1} \mathbb{P}\lp \frac{|S_n|}{n} < \sqrt{ \frac{\log(1/\alpha)}{n} } + \sqrt{\frac{c \log n}{n}} \rp. 
+\end{align}
+Finally, without going into details, we mention that for compactly supported distributions, there exists a strategy of selecting $\{g_n: n \geq 1\}$ in a predictable manner, for which we have 
+\begin{align}
+    \frac{S_n}{n} \geq \sup_{g \in \calG} \frac{1}{n} \sum_{i=1}^n g_i(X_i) - g_i(Y_i) - \frac{c_2}{\sqrt{n}} \geq \frac{S_n^*}{n} - \frac{c_2}{\sqrt{n}}, 
+\end{align}
+where $S_n^* = \sum_{i=1}^n g^*(X_i) - g^*(Y_i)$, and $c_2>0$ is some universal constant. 
+This allows us to show 
+\begin{align}
+    \mathbb{P}\lp \frac{|S_n|}{n} < \sqrt{\frac{\log(1/\alpha)}{n}} + \sqrt{\frac{c \log n}{n}} \rp  \leq \mathbb{P}\lp \frac{S_n^*}{n} < \sqrt{ \frac{c_3 \log(n/\alpha)}{n} }\rp. 
+\end{align}
+Since $\mathbb{E}[S^*_n] = n \Delta$, we can show that the event $G_n = \{|S_n^*/n - \Delta| \leq \sqrt{c_4 \log n/n}\}$ occurs with probability at least $1-1/n^2$~(where $c_4>0$ is some universal constant) [We can show this, for example, by using Hoeffding's inequality]. Hence, we have 
+\begin{align}
+    \mathbb{P}\lp \frac{S_n^*}{n} < \sqrt{ \frac{c_3 \log(n/\alpha)}{n} }\rp \leq \mathbb{P}\lp \left\{ \frac{S_n^*}{n} < \sqrt{ \frac{c_3 \log(n/\alpha)}{n} } \right\} \cap G_n\rp  + \mathbb{P}(G_n^c). 
+\end{align}
+Under the event $G_n$, we know that $S_n^* \geq \Delta - \sqrt{c_4 \log n /n}$, which means that we can further upper bound this 
+\begin{align}
+    \mathbb{P}\lp \frac{S_n^*}{n} < \sqrt{ \frac{c_3 \log(n/\alpha)}{n} }\rp \leq \mathbb{P}\lp \left\{ \Delta < \sqrt{ \frac{c_3 \log(n/\alpha)}{n} } + \sqrt{\frac{c_4 \log n}{n}} \right\} \cap G_n\rp  +  \frac 1 {n^2}. 
+\end{align}
+Thus, we can conclude that 
+\begin{align}
+    \mathbb{E}[\tau] & \leq \sum_{n \geq 1}  \mathbb{P}\lp  \Delta < \sqrt{ \frac{c_3 \log(n/\alpha)}{n} } + \sqrt{\frac{c_4 \log n}{n}} \rp  +  \frac 1 {n^2} \leq n_0 + \frac{\pi^2}{6}, 
+\end{align}
+where $n_0 = \inf \{n \geq 1: \Delta \geq \sqrt{c_3 \log(n/\alpha)/n} + \sqrt{c_4 \log n /n} \} \asymp \log(1/\alpha\Delta)/\Delta^2$. This completes the proof. \hfill \qedsymbol
+\section{Conclusion}
+In this lecture, we proposed a sequential analog of Kolmogorov-Smirnov~(KS) test and analyzed its performance. Under certain conditions, the expected number of observations needed by this test is $\asymp \calO(\log(1/\alpha)/\Delta^2)$, which establishes a key property of sequential methods: they can adapt the expected sample size to the unknown hardness of the problem. In our next lecture, we will see how the same idea essentially can be employed to develop sequential two-sample tests more generally. 
+
+
+\end{document}
