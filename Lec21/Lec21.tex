@@ -1,0 +1,217 @@
+\documentclass[12pt]{article}
+\usepackage[english]{babel}
+\usepackage[utf8x]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{../scribe}
+\usepackage{listings}
+
+\usepackage{hyperref}
+% \usepackage{cleveref}
+\usepackage{xcolor}
+\usepackage{natbib}
+\usepackage{tikz}
+\renewcommand{\arraystretch}{1.5}
+\usepackage{nicefrac}
+% \newcommand{\thetahat}{\widehat{\theta}}
+% \Scribe{Shubhanshu Shekhar}
+\Lecturer{Shubhanshu Shekhar}
+\LectureNumber{21}
+\LectureDate{November 13th, 2025}
+\LectureTitle{Designing Sequential Tests: Part VI}
+
+\lstset{style=mystyle}
+% \usepackage{tikz}
+\usepackage{comment}
+% \usepackage{pgfplots}
+% \usepackage{enumitem}
+\input{../preamble}
+\input{../newMacros}
+
+
+
+\begin{document}
+	\MakeScribeTop
+We continue with our discussion of sequential two-sample tests, but in this lecture we go beyond real-valued observations to observations lying in some general alphabet $\calX$. Surprisingly, the exact same design principle underlying our sequential Kolmogorov-Smirnov~(KS) test is also applicable in this more general setting. We introduce a class of distance metrics, called integral probability metrics or IPMs, and use them to design and analyze sequential two-sample tests. In the process, we will establish some interesting connections between regret of an prediction strategy and performance of our  sequential tests.
+
+\section{Designing Two-Sample Tests Using IPMs}
+\label{sec:general-strategy}
+As before, we consider the sequential two-sample testing problem, where we have a stream of paired observations $\{(X_i, Y_i): i \geq 1\} \simiid P_X \times P_Y$  lying in an alphabet $\calX$, and our goal is to decide between 
+\begin{align}
+    H_0: P_X = P_Y \qtext{versus} H_1: P_X \neq P_Y. 
+\end{align}
+Formally, we want to construct a level-$\alpha$ test of power-one, which is a stopping time $\tau$, such that $\mathbb{P}_{H_0}(\tau < \infty ) \leq \alpha$, and $\mathbb{P}_{H_1}(\tau< \infty) = 1$.
+
+In the previous lecture, we constructed a sequential test based on the Kolmogorov-Smirnov metric, defined as 
+\begin{align}
+    D_{KS}(P_X, P_Y) = \sup_{x \in \mathbb{R}}  |F_X(x) - F_Y(y)| = \sup_{g \in \calG} \mathbb{E}_{P_X}[g(X)]  -  \mathbb{E}_{P_Y}[g(Y)], 
+\end{align}
+where $\calG = \{\pm \boldsymbol{1}_{(-\infty, x]}: x \in \mathbb{R}\}$. To generalize this idea to arbitrary alphabets, we can choose a class of ``test functions'' $\calG \subset \{g: \calX \to \mathbb{R} \}$ and use it to define a notion of distance as follows~(assuming $\calG$ is closed under negation): 
+\begin{align}
+   D_{\calG}(P_X, P_Y) = \sup_{g \in \calG}\; \mathbb{E}_{P_X}[g(X)] -  \mathbb{E}_{P_Y}[g(Y)]. 
+\end{align}
+If $\calG$ is ``rich enough'', it should contain enough test functions to distinguish between any two probability measures on $\calX$, and thus define an actual metric~\citep{muller1997integral}. We give some examples next: 
+\begin{itemize}
+    \item For distributions on $(\calX, \calF_{\calX})$, let $\calG = \{\boldsymbol{1}_E: E \in \calF_{\calX}\}$ denote the set of all indicator functions of measurable sets. Then, $D_{\calG}$ is equal to the total variation metric. 
+
+    \item Let $k:\calX \times \calX \to \mathbb{R}$ denote a positive definite kernel on the alphabet $\calX$, and let $\calH_k$ denote the reproducing kernel Hilbert space associated with this kernel. Then, if $\calG$ is the unit-norm ball in $\calH_k$; that is, $\calG = \{h \in \calH: \|h\|_k \leq 1\}$, then the associated $D_{\calG}$ is the well known \href{https://en.wikipedia.org/wiki/Kernel_embedding_of_distributions}{kernel maximum mean discrepancy~(or kernel MMD)} distance. 
+
+    \item Let $\calX$ be some compact subset of $\mathbb{R}^d$, and let $\calG = \{g:\calX \to \mathbb{R}: g \text{ is } 1\text{-Lipschitz}\}$ denote the set of all $1$-Lipshitz functions on $\calX$. Then, by Kantorovich duality, we know that the Wasserstein-1 metric~($W_1$-metric) between two distributions $P_X$ and $P_Y$ on $\calX$ is equal to $D_{\calG}(P_X, P_Y)$. 
+\end{itemize}
+In the next two subsections, we show how these distance metrics can be used to design sequential tests, starting with an oracle test that depends on some population terms, and then discussing  practical tests that replace the population terms with their data-driven counterparts.
+
+\subsection{An Oracle Sequential Test}
+\label{subsec:oracle-two-sample-test}
+
+The key idea is to reduce two-sample testing to the problem of testing for means of bounded random variables, that we already know how to solve from Lectures 18-19. To do this, fix a function class $\calG$, and assume it is large enough to ensure that $P \neq Q \implies D_{\calG}(P, Q) > 0$. Under this condition, for any pair $P_X, P_Y$ under $H_1$, we can define the \emph{witness function} 
+\begin{align}
+    g^* \equiv g^*(P_X, P_Y, \calG) \in \argmax_{g \in \calG} \mathbb{E}_{P_X}[g(X)] - \mathbb{E}_{P_Y}[g(Y)]. 
+\end{align}
+Then, for $(X,Y) \sim P_X \times P_Y$,  the two-sample testing problem reduces to 
+\begin{align}
+    H_0: \mathbb{E}[V^*] = 0, \qtext{versus} H_1: \mathbb{E}[V^*] > 0, \qtext{where} V^* = g^*(X) - g^*(Y).
+\end{align}
+Assuming that each $g \in \calG$ satisfies $\sup_{x \in \calX} |g(x)| \leq 1/2$, we can define a test for this problem as 
+\begin{align}
+    \tau^* = \inf \{n \geq 1: W_n^* \geq 1/\alpha\}, \qtext{with} W^*_0=1, \; W^*_n = W^*_{n-1} \times (1 + \lambda^* V^*_n), 
+\end{align}
+and $\lambda^{\ast}$ is the log-optimal or Kelly bet 
+\begin{align}
+    \lambda^{\ast} = \argmax_{\lambda \in \lb - \tfrac 12, \tfrac 12 \rb} \mathbb{E}_{P_X \times P_Y}[\log (1 + \lambda \lp g^*(X) - g^*(Y)\rp]. 
+\end{align}
+The reason for restricting $\lambda$ to $[-1/2, 1/2]$ and $\calG$ to be uniformly bounded in absolute value by $1/2$ is to ensure the nonnegativity of the process $\{W_n^*: n \geq 1\}$. It is not too difficult to show that $\tau^*$ is a level-$\alpha$ test with $\mathbb{E}[\tau^*] = \calO(\log(1/\alpha)/D_{\calG}^2(P_X, P_Y))$ under the alternative. 
+
+\subsection{A Practical Sequential Test}
+\label{subsec:practical-two-sample-test}
+Clearly the test $\tau^*$ discussed in the previous subsection is not practical. Nevertheless it serves as a good template for designing practical tests, by replacing the two population terms $g^*$ and $\lambda^*$~(both of which depend on the unknown distributions $P_X, P_Y$) with their data-driven counterparts: 
+\begin{itemize}
+    \item We refer to any policy for selecting $\{\lambda_n: n \geq1 \}$ in a predictable manner~(i.e., each $\lambda_n$ is $\calF_{n-1}$-measurable) as a \emph{betting strategy}, and denote it by $\calA_b$. A natural choice from the theoretical perspective is the \emph{mixture method} or the \href{https://www.ambujtewari.com/stats701-winter2021/slides/full-info_slides2.pdf}{Online Newton Step~(ONS)} method, both of which achieve a $c \log n$ regret, with some universal constant $c>0$. 
+
+    \item We refer to any policy  for selecting a predictable sequence $\{g_n: n \geq 1\}$ that approximates the unknown witness function $g^*$ as the \emph{prediction strategy}, and denote it by $\calA_p$.  To measure the quality of a prediction strategy, we introduce the notion of regret, which is defined as 
+    \begin{align}
+        \mathrm{Reg}_n(\calA_p, X^n, Y^n) = \sup_{g \in \calG} \sum_{i=1}^n g(X_i) - g(Y_i) - \sum_{i=1}^n g_i(X_i) - g_i(Y_i), 
+    \end{align}
+    where $\{(X_i, Y_i): i \geq 1\}$ denote the sequence of paired observations, and $\{g_i: i \geq 1\}$ is the  sequence of data-driven functions selected by the prediction strategy. 
+    As we will see, the regret of $\calA_p$ will play a crucial role in determining the performance of our practical sequential test. 
+\end{itemize}
+With these two components, we can now construct a purely data-driven practical sequential two-sample test: 
+\begin{definition}[Practical Two-Sample Test]
+    \label{def:practical-two-sample-test} Fix $W_0 = 1$, $\lambda_1 = 0$, and set $g_1$ to be an arbitrary element of $\calG$. \\ For $t=1, 2, \ldots:$
+    \begin{itemize}
+        \item Observe the next pair $(X_t, Y_t) \sim P_X \times P_Y$.
+        \item Update $W_t \leftarrow W_{t-1} \times (1 + \lambda_t V_t)$, where $V_t = g_t(X_t) - g_t(Y_t)$. 
+        \item Stop if $W_t \geq 1/\alpha$. 
+        \item Update $\lambda_{t+1} = \calA_b(X^t, Y^t)$. 
+        \item Update $\g_{t+1} = \calA_p(X^t, Y^t)$. 
+    \end{itemize}
+    In other words, we define the stopping time $\tau  = \inf \{n \geq 1: W_n \geq 1/\alpha\}$. 
+\end{definition}
+
+We can establish the following performance guarantees for this test. 
+\begin{theorem}
+    \label{theorem:two-sample-general}
+    The test $\tau$ constructed in~\Cref{def:practical-two-sample-test}  using a betting strategy $\calA_b$ and a prediction strategy $\calA_p$ satisfies the following: 
+    \begin{itemize}
+        \item For any betting and prediction strategies, $\tau$ satisfies the level-$\alpha$ property under the null: $\mathbb{P}_{H_0}(\tau < \infty) \leq \alpha$. 
+        \item Suppose the regret of the betting strategy is $c \log n$; that is, for any sequence $n \geq 1$ and $v_1, v_2, \ldots, v_n \in [-1,1]$, we have $\sum_{i=1}^n \log (1 + \lambda_i v_i) \geq \sup_{\lambda \in [-1/2, 1/2]} \log (1 + \lambda v_i) - c \log n$. Then, we have the following under $H_1$, with $\Delta = D_{\calG}(P_X, P_Y)$: 
+        \begin{align}
+            &\limsup_{n \to \infty} \frac{\mathrm{Reg}_n(\calA_p, X^n, Y^n)}{n} \stackrel{a.s.}{<} \Delta  \quad \implies \quad \mathbb{P}_{H_1}(\tau < \infty) = 1.  \label{eq:power-one-property}
+        \end{align}
+        \item Under a stronger high probability control of the regret of $\calA_p$, we can also bound the expected stopping time; that is,
+        \begin{align}
+            \mathbb{P}\lp \frac{\mathrm{Reg}_n(\calA_p, X^n, Y^n)}{n} \geq \frac{c}{\sqrt{n}} \rp \leq \frac{1}{2n^2} \quad \implies \quad \mathbb{E}[\tau] = \calO\lp \frac{\log(1/\alpha \Delta)}{\Delta^2} \rp. 
+        \end{align}
+    \end{itemize}
+\end{theorem}
+The proof of the level-$\alpha$ property simply follows from the fact that for any feasible betting and prediction strategies, the process $\{W_n: n \geq 1\}$ is  a non-negative martingale with an initial value of $1$, and hence Ville's inequality applies. The proof of the remaining two-steps is in the next section. 
+
+\section{Analysis of the Sequential Test}
+\label{sec:analysis}
+
+
+
+\paragraph{Power-one property.} We first show that if 
+\begin{align}
+    \limsup_{n \to \infty} \frac{\mathrm{Reg}_n}{n} < \Delta(P_X, P_Y) \coloneqq \sup_{g \in \calG} \mathbb{E}_{P_X}[g(X)] - \mathbb{E}_{P_Y}[g(Y)] \quad \implies \quad \mathbb{P}_{H_1}(\tau< \infty) = 1.
+\end{align}
+To do this observe the following: 
+\begin{align}
+    \mathbb{P}_{H_1}(\tau< \infty) = \lim_{n \to \infty} \mathbb{P}_{H_1}(\tau \leq n) = 1 - \lim_{n \to \infty} \mathbb{P}_{H_1}(\tau > n). 
+\end{align}
+Thus, it suffices to analyze the term $\mathbb{P}_{H_1}(\tau >n)$. Observe that 
+\begin{align}
+    \mathbb{P}_{H_1}(\tau > n) \leq \mathbb{P}_{H_1}\lp \log W_n < \log(1/\alpha) \rp. 
+\end{align}
+By the regret guarantee on the betting strategy, we know that 
+\begin{align}
+    \log w_n \geq \sup_{|\lambda|\leq 1/2} \sum_{i=1}^n \log (1 + \lambda v_i) - c \log n, 
+\end{align}
+where we use $v_i$ to denote $g_i(X_i) - g_i(Y_i)$. On taking the second order Taylor approximation, and optimizing this lower bound over $\lambda$, we get 
+\begin{align}
+    \sup_{|\lambda|\leq 1/2}  \sum_{i=1}^n \log (1 + \lambda v_i) \geq \sup_{|\lambda|\leq 1/2} \lambda S_n - \lambda^2 M_n  \geq \sup_{|\lambda|\leq 1/2} \lambda S_n - \lambda^2 n = \frac{S_n^2}{4n}, 
+\end{align}
+where we use $S_n = \sum_{i=1}^n v_i$ and $M_n = \sum_{i=1}^n v_i^2$, and $c$ is some universal constant $\geq 1$. Thus, we have 
+\begin{align}
+    \mathbb{P}_{H_1}(\tau > n ) \leq \mathbb{P}_{H_1}\lp \frac{S_n^2}{4n} < \log (1/\alpha) + c \log n\rp\leq \mathbb{P}_{H_1}\lp \frac{|S_n|}{n} < 2 \sqrt{\frac{c \log(n/\alpha)}{n}} \rp. 
+\end{align}
+Now, we know that $|S_n| \geq S_n$, and hence 
+\begin{align}
+    \mathbb{P}_{H_1} \lp \frac{|S_n|}{n} < 2 \sqrt{\frac{c \log(n/\alpha)}{n}} \rp  \leq\mathbb{P}_{H_1} \lp \frac{S_n}{n} < 2 \sqrt{\frac{c \log(n/\alpha)}{n}} \rp. 
+\end{align}
+Finally, we can use the regret guarantee to claim that $S_n > S_n^* - \mathrm{Reg}_n$, where $S^*_n = \sum_{i=1}^n v^*_i = \sum_{i=1}^n g^*(X_i) - g^*(Y_i)$. This implies that  
+\begin{align}
+   \mathbb{P}_{H_1}(\tau > n) \leq \mathbb{P}\lp \frac{S_n^*}{n} - \frac{\mathrm{Reg}_n}{n} < 2 \sqrt{\frac{c\log (n/\alpha)}{n}} \rp. 
+\end{align}
+Now, taking the limit to $\infty$, we can show that if $\limsup_{n \to \infty} \mathrm{Reg}_n/n < \lim_{n\to \infty} S_n^*/n = \Delta(P_X, P_Y)$, then we have 
+\begin{align}
+    \lim_{n \to \infty} \mathbb{P}_{H_1}(\tau > n)  = 0. 
+\end{align}
+This in turn implies the power one property as required. 
+
+
+\paragraph{Analysis of Expected stopping time.} To analyze the expected stopping time under the alternative, we need to introduce a ``Good event'': 
+\begin{align}
+    G_n = \left\{ \mathrm{Reg}_n < r_n \right\} \bigcap \left\{ \left\lvert \frac{1}{n} S_n^* - \Delta \right\rvert < c\sqrt{\frac{\log n}{n}} \right\}, 
+\end{align}
+and throughout we assume that $\mathbb{P}_{H_1}(G_n^c) \leq 1/n^2$ for all $n \geq 1$ and with $r_n = c \sqrt{n}$. 
+Now, to analyze the expected stopping time, we begin with the observation that 
+\begin{align}
+    \mathbb{E}[\tau] & = \sum_{n \geq 0} \mathbb{P}_{H_1}(\tau > n). 
+\end{align}
+Hence, the problem essentially reduces to that of analyzing the tail probability. To do that, we note the following. 
+\begin{align}
+    \mathbb{E}[\tau] & = \sum_{n \geq 0} \mathbb{P}_{H_1}(\{\tau > n\} \cap G_n) +  \mathbb{P}_{H_1}(\{\tau > n\} \cap G_n^c)  \\
+    & \leq 1 +  \sum_{n \geq 1} \mathbb{P}_{H_1}(\{\tau > n\} \cap G_n) +  \mathbb{P}_{H_1}(  \cap G_n^c) && (\text{since }\mathbb{P}(\tau > 0) = 1) \\
+    & \leq 1 +  \sum_{n \geq 1} \mathbb{P}_{H_1}(\{\tau > n\} \cap G_n) + \sum_{n \geq 1} \frac{1}{n^2},  \\
+    & \leq  \sum_{n \geq 1} \mathbb{P}_{H_1}(\{\tau > n\} \cap G_n) + \calO(1). && \lp\text{since } \sum_{n \geq 1} \frac 1 {n^2} = \frac {\pi^2}{6} \rp
+\end{align}
+So we will now analyze the event $\mathbb{P}_{H_1}(\{\tau > n\} \cap G_n)$. As before, we can upper bound this with 
+\begin{align}
+ \mathbb{P}_{H_1}(\{\tau > n\} \cap G_n) \leq \mathbb{P}\lp \left\{ \frac{S_n^*}{n} - \frac{\mathrm{Reg}_n}{n} < 2 \sqrt{\frac{c\log (n/\alpha)}{n}}  \right \} \cap G_n\rp.   
+\end{align}
+Under the good event $G_n$, we know that $\mathrm{Reg}_n/n  \leq r_n/n$, and that $S_n^*/n > \Delta(P_X, P_Y) - c\sqrt{\log n/n}$. Combining these two facts, we see that 
+\begin{align}
+    \mathbb{P}_{H_1}(\{\tau > n\} \cap G_n) \leq \mathbb{P}\lp \left\{ \Delta < \frac{r_n}{n} + c\sqrt{\frac{\log n}{n}} + 2 \sqrt{\frac{c\log (n/\alpha)}{n}}  \right \} \cap G_n\rp.   
+\end{align}
+Define $n_0$ as 
+\begin{align}
+    n_0 = \inf \left \{ n \geq 1: \Delta \geq \frac{r_n}{n} + c\sqrt{\frac{\log n}{n}} + 2 \sqrt{\frac{c\log (n/\alpha)}{n}}   \right\}, 
+\end{align}
+and observe that 
+\begin{align}
+    \mathbb{P}_{H_1}(\{\tau > n\} \cap G_n) = 0, \qtext{for all} n \geq n_0. 
+\end{align}
+Hence, we have that 
+\begin{align}
+    \mathbb{E}_{H_1}[\tau] \leq n_0 + \calO(1). 
+\end{align}
+Finally, if $r_n/n \asymp \sqrt{1/n}$, then it is easy to verify that 
+\begin{align}
+    n_0 \asymp \frac{\log(1/\alpha \Delta)}{\Delta^2}. 
+\end{align}
+This completes the proof. 
+
+
+    
+    \bibliographystyle{abbrvnat}
+    \bibliography{../ref}
+\end{document}
