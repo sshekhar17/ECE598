@@ -1,0 +1,227 @@
+\documentclass[12pt]{article}
+\usepackage[english]{babel}
+\usepackage[utf8x]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{../scribe}
+\usepackage{listings}
+
+\usepackage{hyperref}
+% \usepackage{cleveref}
+\usepackage{xcolor}
+\usepackage{natbib}
+\usepackage{tikz}
+\renewcommand{\arraystretch}{1.5}
+\usepackage{nicefrac}
+% \newcommand{\thetahat}{\widehat{\theta}}
+% \Scribe{Shubhanshu Shekhar}
+\Lecturer{Shubhanshu Shekhar}
+\LectureNumber{22}
+\LectureDate{November 18th, 2025}
+\LectureTitle{Designing Sequential Tests: Part VII}
+
+\lstset{style=mystyle}
+% \usepackage{tikz}
+\usepackage{comment}
+% \usepackage{pgfplots}
+% \usepackage{enumitem}
+\input{../preamble}
+\input{../newMacros}
+
+\newcommand{\adversarial}{\calT_{\mathrm{adv}}}
+
+
+\begin{document}
+	\MakeScribeTop
+    This is our final lecture on the topic of designing and analyzing sequential power-one tests. So far, we have discussed how to construct sequential tests for finite alphabets, for testing bounded means, and two-sample tests. We discussed some common design principles, such as using test martingales, Ville's inequality, and Wald's inequality, used in all these problems. In today's lecture, we will build upon all these ideas to show how we can study a larger class of nonparametric testing problems in a unified manner. 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    \section{An Abstract Testing Problem}
+    \label{sec:abstract-testing-problem}
+    In this section, we will introduce an abstract class of hypothesis testing problems, that can be characterized in terms of invariance to certain operators. To describe the problem, we assume that $\{Z_n: n \geq 1\}$ denote a stream of \iid observations from some distribution $P_Z$, and let $\calT_i:\calZ \to \calW$ for $i=1,2$ denote two operators from $\calZ$ to some space $\calW$~(possibly different from $\calZ$). Then, we are interested in deciding between 
+    \begin{align}
+        H_0: \calT_1(Z) \stackrel{d}{=} \calT_2(Z) \qtext{versus} H_1: \calT_1(Z) \not \stackrel{d}{=} \calT_2(Z).  \label{eq:abstract-problem-def}
+    \end{align}
+    This abstract formulation enables a unified treatment of several classical and modern testing problem; from two-sample testing, independence testing, symmetry testing, to testing for fairness and adversarial robustness of machine learning models. 
+
+    \begin{figure}[hbt!]
+        \centering
+        \def\figwidth{0.5\columnwidth}
+        \def\figheight{0.25\columnwidth} 
+        %%%%%%%
+        \input{./illustration}
+        %%%%%%%
+        \caption{Let $Z$ denote a $\mc{Z}$-valued random variable on an underlying probability space $(\Omega, \mc{F}, \mathbb{P})$.  By definition, the distribution of the $Z$ is equal to $P_Z = \mathbb{P} \circ Z^{-1}$. The two black curved lines from $\mc{Z}$ to $\mc{W}$ denote the operators $\Tau_i$ for $i \in \{1, 2\}$, used to characterize the class of null distributions. In particular, the distribution of the resulting $\mc{W}$-valued random variables is $\mathbb{P} \circ (\Tau_i \circ Z)^{-1} = \mathbb{P} \circ Z^{-1} \circ \Tau_i^{-1} = P_Z \circ \Tau_i^{-1}$, and the null hypothesis of our abstract testing problem states that the two distributions, $P_Z \circ \Tau_1^{-1}$ and $P_Z \circ \Tau_2^{-1}$, are the same.}
+        \label{fig:problem-statement}
+    \end{figure}
+
+
+    \subsection{Examples}
+    Before going further, we show how the formulation above models various important problems.  We borrow the exposition from~\citet{pandeva2024deep}. 
+        
+      \begin{example}[Paired Two-Sample Testing]
+        \label{example:two-sample-testing}
+        Given a stream of paired observations: $\{(X_t, Y_t): t \geq 1\}$ drawn \iid from a distribution $P_{X}\times P_Y$ on a product space $\mc{X} \times \mc{X}$, our goal is to decide between the null, $H_0: P_{X} = P_Y$, against the alternative ${H_1: P_X \neq P_Y}$. This is a nonparametric testing problem with a composite null and a composite alternative. The null hypothesis class, however, has an interesting symmetry: the joint distribution of $(X, Y)$ is the same as the joint distribution of $(Y, X)$. We can formally state this as $H_0: (X,Y) \eqdist \swap((X,Y))$, where $\swap: \mc{X} \times \mc{X} \to \mc{X} \times \mc{X}$, and $\swap((x,y)) = (y, x)$. 
+    \end{example}
+
+    % 
+    \begin{example}[Conditional Independence Testing]
+        \label{example:conditional-independence}
+        Given observations $\{(U_t, V_t, W_t):  t \geq 1\}$ drawn \iid from $P_{UVW}$, we want to test whether ${U\perp \!\!\! \perp  V\mid W}$ or not. This problem is fundamentally impossible without further assumptions~\citep{shah2020hardness}, and a common structural assumption is that the conditional $P_{U\mid W}$ is known~(the \emph{model-X} assumption \citep{candes2018panning}). We can now reframe this problem as follows: %\\
+        \begin{itemize}[leftmargin=*]
+            \item Given $(U, V, W)$, generate a new $\widetilde{U} \sim P_{U\mid W}(\cdot |W)$, and let $Z$ denote   $\big( (U, V, W), (\widetilde{U}, V, W) \big)$.  
+            \item Let $\Tau_1$ and $\Tau_2$ denote the coordinate projections:  $\Tau_1(Z) = (U, V, W)$ and $\Tau_2(Z) = (\widetilde{U}, V, W)$. 
+        \end{itemize}
+        With these definitions, conditional independence~(CI) testing falls under the abstract framework defined in~\eqref{eq:abstract-problem-def}.
+    \end{example}
+    Testing for invariance under group actions, such as rotations, is another instantiation of~\eqref{eq:abstract-problem-def}. 
+        \begin{example}[Rotation invariance testing]
+        \label{example:group-invariance}
+         Given a stream of observations $\{(X_t, Y_t): t \geq 1\}$, where the $X_t$'s denote images of the (handwritten) digit ``$6$'', while dataset $Y_t$'s are images that, at a glance, represent the digit ``$9$''. However, these may essentially be the digit ``$6$'' but rotated. We aim to determine the statistical relationship between $X_t$ and $\Tau_{180}(Y_t)$: the  $180$ degree rotations of $Y_t$. Essentially, we want to decide whether $(Y_t)_{t \geq 1}$ are merely rotated versions of ``$6$'', or truly represent the digit ``$9$''. 
+        Using the swap operator from~\Cref{example:two-sample-testing},   we define two distinct operators: $ \Tau_1 = (\Tau_{180}, \Tau_{\text{id}})\circ \Tau_{\text{swap}}$, and $\Tau_2 = (\Tau_{\text{id}}, \Tau_{180})$, with $\Tau_{\text{id}}$ being the identity mapping. Then, the above-defined test is equivalent to testing  $ H_0: \Tau_1(Z) \stackrel{d}{=} \Tau_2(Z) $, where $Z = (X,Y)$.
+    \end{example}
+    % 
+    Our general framework is not restricted to simple operators with closed-form expressions, as in the examples above. In fact, the operators involved can even be general function approximators, such as deep neural networks.
+    % 
+    \begin{example}[Adversarial Examples]
+        \label{example:adversarial-attacks}
+        We now consider the problem of certifying the robustness of a trained machine learning model $h$ to adversarial perturbations~\citep{szegedy2014intriguing}. In particular, let $\adversarial$ denote the adversarial attack that maps an input $X$ to its adversarially perturbed version $\widetilde{X}$. Furthermore,  let $\Tau_h$ denote the output of a specific layer~(for example, a bottleneck layer) of the model. 
+        Then, our goal is to decide if the distributions of $Y = \Tau_h(X)$ and $\widetilde{Y} = \Tau_h(\widetilde{X})$ are equal or not. In other words, the null states that the distribution of $X$ after applying $\Tau_h$ and $\Tau_h \circ \adversarial$ is the same. 
+    \end{example}
+
+
+        \begin{example}[Independence Testing]
+        \label{example:independence-testing}
+            Independence testing is another well-studied problem in statistics, where given observations $\{(X_i, Y_i): 1 \leq i \leq n\}$ drawn i.i.d.  from a distribution $P_{XY}$ on a product space $\mc{X} \times \mc{Y}$, we want to test whether $P_{XY} = P_X \times P_Y$ or not. By working with two pairs of observations at a time, we can again describe the null as being invariant to an operator. In particular, let given $Z_1 = (X_1, Y_1)$ and $Z_2 = (X_2, Y_2)$, let $\Tau$ denote the operator that maps $(Z_1, Z_2)$ to $(Z_1', Z_2')$, with $Z_1' = (X_1, Y_2)$ and $Z_2' = (X_2, Y_1)$. Clearly, the distribution of $(Z_1, Z_2)$ is the same as that of $(Z_1', Z_2')$ under the null, while this invariance to $\Tau$ is broken under the alternative. 
+        \end{example}
+    
+        \begin{example}[Symmetry Testing]
+            \label{example:symmetry-testing}
+            In the simplest version of this problem, we consider real-valued observations~(that is, $\mc{Z}=\R$), and the operators $\Tau_2 = \identity$, and $\Tau_1 = \flip$, where the operator $\flip$  simply flips the observations about the origin; that is, $\flip(x) = -x$. The resulting null hypothesis asserts that $P_Z$ is symmetric about the origin. 
+            The same formulation also covers other kinds of symmetry, such as rotational invariance or invariance to horizontal or vertical flips in the case of images.        
+        \end{example}
+
+      
+    \begin{example}[Group Invariance Testing]
+    \label{example:rotation-invariance}
+    Suppose we have a collection of images $Z$ containing equilateral triangles. Each edge of these triangles is colored either blue or green.  A practitioner would like to find out if the edges of the triangles are colored without any particular pattern, or if some hidden rule controls their coloring. To do this, we will examine whether the triangles remain the same when rotated 120 or 240 degrees.  We will therefore introduce a set of operators that represent the aforementioned rotations: $\Tau_{120}$ and $\Tau_{240}$. Next, we formulate the following \textit{composite} null hypothesis:
+    \begin{align}
+        H_0: \Tau_{120}(Z)=Z  \text{ and }  \Tau_{240}(Z)=Z 
+    \end{align}
+    Thus, we want to test whether the distribution of $Z$ remains invariant w.r.t.\,the two operators $\Tau_{120}$ and $\Tau_{240}$. 
+    \end{example}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Proposed Test}
+We will use the exact same design idea that we used for two-sample testing for this more general problem. For simplicity, let us consider a simplified version of~\eqref{eq:abstract-problem-def} in which $\Tau_2 = \identity$, and we will drop the subscript from $\Tau_1$~(and assume $\calW = \calZ$): 
+\begin{align}
+    H_0: \Tau(Z) \eqdist Z \qtext{versus} H_1: \Tau(Z) \not \eqdist Z. \label{eq:simple-abstract-problem-def}
+\end{align}
+Since this is essentially a two-sample testing problem in disguise, our general template from the previous lecture carries over to this case almost directly. In particular, we proceed as follows: 
+\begin{itemize}
+    \item Choose a function class $\calG \subset \{g: \calX \to [-1/2, 1/2]\}$, and define a notion of distance 
+    \begin{align}
+        D_\calG(P_Z, \calT) = \sup_{g \in \calG}\; \mathbb{E}_{P_Z}[g(Z) - g(\calT(Z))]. 
+    \end{align}
+    As before, we assume that $\calG$ is rich enough to ensure that whenever $\Tau(Z) \not \eqdist Z$, the distance defined above is strictly positive. 
+
+    \item For a given distribution $P_Z$, and operator $\calT$, we can define the ``witness function'' $g^* \equiv g^*(P_Z, \calT)$ as 
+    \begin{align}
+        g^* \equiv g^*(P_Z, \calT) \in \argmax_{g\in \calG}\; \mathbb{E}_{P_Z}[g(Z) - g(\calT(Z))].
+    \end{align}
+    \item A natural definition of ``oracle test'' follows 
+    \begin{align}
+        &\tau^* = \inf \{n \geq 1: W_n^* \geq 1/\alpha\}, \qtext{where} \\ 
+        &W^*_0 = 1, \; W^*_n = W^*_{n-1} \times \lp 1 + \lambda^* (g^*(Z) - g^*(\calT(Z)))\rp, 
+    \end{align}
+    and $\lambda^* = \argmax_{\lambda \in [-0.5, 0.5]} \mathbb{E}_{P_Z}\lb \log \lp 1 + \lambda(g(Z) - g(\calT(Z))) \rp \rb$. 
+
+    \item Clearly the oracle test cannot be implemented in practice. So we replace the population terms with their data driven versions, using a \emph{betting strategy} $\calA_b$~(for choosing the bets $\{\lambda_n: n \geq 1\}$) and a \emph{prediction strategy} $\calA_p$~(for selecting $\{g_n: n \geq 1\}$), which gives us 
+    \begin{align}
+        \tau = \inf \{n \geq 1: W_n \geq 1/\alpha\}, \qtext{with} W_0=1, \; W_n = W_{n-1} \times (1 + \lambda_n V_n), \label{eq:sequential-test-abstract-problem}
+    \end{align}
+    where $V_n = g_n(Z_n) - g_n(\Tau(Z_n))$. 
+\end{itemize}
+It is easy to show, as in our previous lecture, that the test $\tau$ defined above is level-$\alpha$ for all betting and prediction strategies. 
+Furthermore, as in the previous lecture, the power of this sequential test can again be characterized in terms of the regret of the prediction strategy $\calA_p$, defined as 
+\begin{align}
+    \label{eq:abstract-regret} 
+    \mc{R}_n \equiv \mc{R}_n \lp \calA_p, \mc{G}, \Tau, Z_1^n \rp  \defined \sup_{g \in \mc{G}} \sum_{t=1}^n \bigg( \big(g(Z_t) - g(\Tau Z_t) \big) - \big(g_t(Z_t) - g_t(\Tau Z_t) \big) \bigg). 
+\end{align}
+
+        \begin{corollary}
+            \label{corollary:abstract-test-1} 
+            For the hypothesis testing problem defined in~\eqref{eq:simple-abstract-problem-def}, let $\tau \equiv \tau(\calA_b, \calA_p)$ denote the sequential test introduced in~\eqref{eq:sequential-test-abstract-problem} with function class $\mc{G}$. Then, we have the following: 
+            \begin{itemize}
+                \item  For any prediction strategy $\calA_p$,  the test $\tau(\calA_b, \calA_p)$ controls the type-I error uniformly over the null; that is, $\sup_{P \in \nullclass}  \mathbb{P}_{P}(\tau<\infty) \leq \alpha$. 
+                
+                \item If  $\calA_p$ ensures that $\limsup_{n \to \infty} \frac{\mc{R}_n \lp \calA_p, \mc{G}, \Tau, Z_1^n \rp}{n} < \dG\lp P, P \circ \Tau^{-1}\rp$ almost surely under the alternative, then the test $\tau$ is consistent. That is, $\mathbb{P}_P\lp \tau < \infty \rp = 1$ for all $P \in \altclass$. 
+                
+                \item If  $\calA_p$ ensures that there exists a sequence $\{r_n: n\geq 1\}$ with $r_n \to 0$, and events $E_n = \{ \mc{R}_n/n\leq r_n \}$ with $\sum_{n=1}^{\infty} \mathbb{P}(E_n^c) < \infty$, then the expected stopping time satisfies the upper bound $\mathbb{E}_{H_1}[\tau] = \calO\lp \tfrac{\log(1/\alpha \Delta)}{\Delta^2} \rp$, where $\Delta = \dG(P_Z, \Tau)$. 
+            \end{itemize}
+        \end{corollary}
+        The proof  follows the exact same steps as in the analysis of the two-sample test in previous lecture, and we omit the details. 
+        
+        
+       While~Corollary~\ref{corollary:abstract-test-1} identifies sufficient conditions for the consistency of the test $\tau$, it is non-constructive in nature. We now analyze the properties of our test $\tau$ initialized with  a natural prediction strategy,  called the empirical risk minimization~(ERM) strategy. 
+       
+       \begin{definition}[ERM strategy]
+          \label{def:erm-strategy} 
+          For a stream of observations $\{Z_t: t \geq 1\}$, the ERM prediction strategy, $\Aerm$,  selects $\{g_t\equiv g_t(Z_1^{t-1}): t \geq 1\}$ as follows:
+          \begin{align}
+                 \label{eq:erm-prediction-0}
+                g_t \in \argmax_{g \in \mc{G}} \frac{1}{t-1} \sum_{i=1}^{t-1} g(Z_i) - g(\Tau Z_i), \quad \text{for all } t\geq 2,
+          \end{align}
+          and at $t=1$, $\Aerm$ sets $g_1$ to be an arbitrary element of $\mc{G}$. 
+       \end{definition}
+       We will analyze the performance of our test $\tau(\calA_b, \Aerm)$ under certain assumptions on the richness of the function class $\mc{G}$. A suitable measure of complexity is the Rademacher complexity, whose definition we recall next. 
+       \begin{definition}
+          \label{def:rademacher-complexity}
+          Consider a  function class $\mc{H}$ containing mappings from some observations space $\mc{Z}$ to $\mathbb{R}$, and let $P \in \mc{P}(\mc{Z})$ denote a probability distribution on $\mc{Z}$. For a natural number $n \geq 1$, let $\boldsymbol{\sigma_n} = (\sigma_1, \ldots, \sigma_n)$ denote a random vector distributed uniformly over $\{-1,+1\}^n$.  Then, given $Z_1, Z_2, \ldots, Z_n$ drawn \iid from $P$, introduce the the following complexity terms: 
+        % 
+        \begin{align}
+            \label{eq:rademacher-complexity-0} 
+            C_n(\mc{H}, P) \defined \frac{1}{n} \mathbb{E}\lb  \sup_{h \in \mc{H}} \sum_{t=1}^n h(Z_t) \sigma_t \rb, \quad \text{and} \quad  C_n(\mc{H}) \defined \sup_{P \in \mc{P}(\mc{Z})} C_n(\mc{H}, P). 
+          \end{align}
+        \end{definition}%
+        % 
+        Before stating \Cref{theorem:abstract-power-result}, we need to introduce two more terms: the function class $\Gtilde$, and the notion of $\Delta$-separated alternatives, $\altclass(\Delta)$. 
+        % \begin{small}
+        \begin{align}
+            \Gtilde \defined \{\gtilde(\cdot) = g(\cdot) - g(\Tau \cdot), \; g \in \mc{G}\}, \quad \text{and} \quad \altclass(\Delta)=\{P \in \altclass: \dG(P, P\circ\Tau^{-1})>\Delta)\}. \label{eq:G-tilde}
+        \end{align}
+        % \end{small}
+       We now present the main result of this section, that relates the consistency and detection boundary of $\tau(\calA_b, \Aerm)$ to the complexity of the function class $\Gtilde$.
+        \begin{theorem}
+            \label{theorem:abstract-power-result}
+            For the sequential test $\tau \equiv \tau(\calA_b, \Aerm)$ for the  testing problem of~\eqref{eq:simple-abstract-problem-def}, with prediction strategy  $\Aerm$ introduced in~\Cref{def:erm-strategy},  we have the following: 
+            \begin{itemize}
+                \item $\tau$ is consistent against any $P \in \altclass$, for which  $C_n(\Gtilde, P)$ converges to $0$, that is,
+                \begin{align}
+                     \lim_{n \to \infty} C_n(\Gtilde, P) \to 0  \quad \implies \quad \mathbb{P}_P(\tau < \infty) = 1. 
+                \end{align}
+                \item Suppose $C_n(\Gtilde)$ converges to $0$ with $n$, and for  a small $\gamma \in (0,1)$, introduce the term 
+                \begin{align}
+                    \Delta_n^* =  \sqrt{ \frac{ 8 \log{n/\alpha}}{n}} + \frac{2}{n} \lp 2 + \sum_{t=1}^{n-1} \lp C_t(\Gtilde) + 5\sqrt{ \frac{\log(16n/\gamma)}{2t}} \rp \rp + \sqrt{\frac{8 \log(4/\gamma)}{n}}.
+                \end{align}
+                
+                Then, for any $n \geq 1$, and $\Delta_n>\Delta_n^*$, 
+                \begin{align}
+                     \sup_{P \in \altclass(\Delta_n)} \mathbb{P}_P(\tau >n ) \leq \gamma. 
+                \end{align}
+                In other words, $\Delta_n^*$ denotes the minimum separation that can be detected with power greater than $1-\gamma$ by our sequential test within the first $n$ observations.
+            \end{itemize}
+        \end{theorem}
+        The proof of this statement is given in~\citet{shekhar2023nonparametric}. 
+            The above result implies that the detection boundary for our test in terms of the $\dG$ distance measure is given by $\Delta_n^* =  \Omega\lp \frac{1}{n} \sum_{t=1}^{n-1} C_t(\Gtilde) +  \sqrt{\frac{\log(n/\alpha)}{n}} + \sqrt{\frac{\log(n/\gamma)}{n}}\rp$, where $\alpha$ and $\gamma$ correspond to the type-I and type-II errors. For the bounded-mean test we considered in Lectures 18-19, and the kernel-MMD test from the previous lecture, it is known that $C_t(\Gtilde)$ decays to zero at a $1/\sqrt{t}$ rate. Hence, for both these tests, we have $\Delta_n^* = \Omega \lp   \sqrt{\frac{\log(n/\alpha)}{n}} + \sqrt{\frac{\log(n/\gamma)}{n}}\rp$. 
+   
+        \paragraph{Testing for independence.} In this case, we have two observation spaces $\mc{X}$ and $\mc{Y}$, not necessarily the same, and define $\mc{Z} = \lp \mc{X} \times \mc{Y} \rp \times \lp \mc{X} \times \mc{Y} \rp$. Let $P_{XY}$ denote a distribution in $\mc{P}(\mc{X} \times \mc{Y})$, and let $P_X \in \mc{P}(\mc{X})$  and $P_Y \in \mc{P}(\mc{Y})$ denote its marginals. Under the null hypothesis, we have $P_{XY} = P_X \times P_Y$, which can be encoded via the operator $\Tau: \mc{Z} \to \mc{Z}$, with $\Tau((x, y), (x', y')) = ((x,y'), (x', y))$. 
+       
+         When $\mc{X}=\mc{Y}=\mathbb{R}$, we can again select $\mc{G} = \{g(x) = \boldsymbol{1}_{x \leq u}: u \in \mbb{R}\}$, which leads to  $\dG$ being the KS distance between $P_{XY}$ and the product of its marginals $P_X \times P_Y$. For general $\mc{X} \neq \mc{Y}$, a suitable choice of $\mc{G}$ is a norm ball in the RKHS of the product kernel $K((x, y), (x', y')) \defined K_X(x, x') K_Y(y, y')$ for positive definite kernels $K_X: \mc{X}\times \mc{X} \to \mbb{R}$ and $K_Y: \mc{Y}\times \mc{Y} \to \mbb{R}$. In this case, the distance $\dG$ is the kernel-MMD distance between $P_{XY}$ and $P_{X}\times P_Y$; also called the HSIC criterion \citep{gretton2005measuring}. In both cases,~\Cref{theorem:abstract-power-result} implies that the test is ERM strategy is consistent and, furthermore, has a detection boundary of the order $\mc{O}(\sqrt{\log n /n})$ in their respective distance metrics. 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Conclusion}
+This concludes our module on designing sequential power-one tests by using ideas from universal portfolios and online learning. All the tests we designed had the general form $\tau = \inf \{n \geq 1: W_n \geq 1/\alpha\}$, and hence the task reduces to constructing appropriate stochastic processes $\{W_n: n \geq 1\}$. In the simplest case~(finite alphabet), we can use likelihood functions, but in more general nonparametric problems, we developed alternative techniques, relying on the dual representations of mean-constrained divergence~(bounded mean), and using integral probability metrics~(two-sample testing and beyond).  
+    
+    \bibliographystyle{abbrvnat}
+    \bibliography{../ref}
+\end{document}
